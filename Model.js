@@ -12,12 +12,13 @@
 // local wall-clock time, which comes from the JS engine's zone (the system
 // zone inside the shell, TZ=... under node).
 
-var PLUGIN_ID = "io.github.nameproof.nordic-weather"
-// Identifies us to MET and yr.no (MET's terms ask for it): id and version
-// from the manifest the shell hands the service, plus where to reach us.
+var PLUGIN_ID = "io.github.toldenburger.netherlands-weather"
+// Identifies us to MET (MET's terms ask for it) and Buienradar: id and
+// version from the manifest the shell hands the service, plus where to
+// reach us.
 function userAgent(manifest) {
   var version = manifest && manifest.version ? manifest.version : "dev"
-  return PLUGIN_ID + "/" + version + " github.com/nameproof/nordic-weather"
+  return PLUGIN_ID + "/" + version + " github.com/toldenburger/nordic-weather"
 }
 var MET_BASE = "https://api.met.no/weatherapi"
 var HOUR_MS = 3600 * 1000
@@ -43,240 +44,62 @@ var NOWCAST_BACKGROUND_MS = 15 * 60000
 //             (also [plain, showers], for agreement), and the thunder suffix
 // A new language is one more entry; tests check it has every key.
 var STRINGS = {
-  sv: {
-    locales: ["sv"],
+  nl: {
+    locales: ["nl"],
     decimal: ",",
     dayDate: "{day} {month}",
-    hour: "h",
-    geocode: "sv",
+    hour: "u",
+    geocode: "nl",
     precip: {
-      rain: ["regn", "regnskurar"],
-      sleet: ["snöblandat regn", "byar av snöblandat regn"],
-      snow: ["snöfall", "snöbyar"],
-      light: ["lätt", "lätta"],
-      heavy: ["kraftigt", "kraftiga"],
-      thunder: " och åska"
+      rain: ["regen", "regenbuien"],
+      sleet: ["natte sneeuw", "buien met natte sneeuw"],
+      snow: ["sneeuw", "sneeuwbuien"],
+      light: ["lichte", "lichte"],
+      heavy: ["zware", "zware"],
+      thunder: " en onweer"
     },
-    today: "Idag",
-    tomorrow: "Imorgon",
-    months: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
-    weekdays: ["Söndag", "Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag"],
-    weekdaysShort: ["Sön", "Mån", "Tis", "Ons", "Tor", "Fre", "Lör"],
-    compass: ["N", "NO", "O", "SO", "S", "SV", "V", "NV"],
-    moonPhases: ["Nymåne", "Växande månskära", "Första kvarter", "Växande måne",
-                 "Fullmåne", "Avtagande måne", "Sista kvarter", "Avtagande månskära"],
-    feels: "Känns som",
-    wind: "Vind",
-    humidity: "Fukt",
-    pressure: "Tryck",
-    pressureNext: "på 3 h",
-    moonHigh: "högst",
-    gust: "byar",
-    forecastFrom: "prognos från",
-    stale: "Inaktuell",
-    fetching: "Hämtar prognos…",
-    searchPlaceholder: "Sök plats",
-    noResults: "Inga platser hittades",
-    noLocation: "Välj en plats för att se vädret",
-    chooseLocation: "Välj plats",
-    precipitation: "Nederbörd",
-    rain: "Regn",
-    sleet: "Snöblandat regn",
-    snow: "Snö",
-    nowcastDry: "Uppehåll närmaste {n} min",
-    nowcastWetAll: "{kind} närmaste {n} min",
-    nowcastStopping: "{kind} nu, upphör om ca {n} min",
-    nowcastStarting: "{kind} om ca {n} min",
+    today: "Vandaag",
+    tomorrow: "Morgen",
+    months: ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
+    weekdays: ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"],
+    weekdaysShort: ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"],
+    compass: ["N", "NO", "O", "ZO", "Z", "ZW", "W", "NW"],
+    moonPhases: ["Nieuwe maan", "Wassende sikkel", "Eerste kwartier", "Wassende maan",
+                 "Volle maan", "Afnemende maan", "Laatste kwartier", "Afnemende sikkel"],
+    feels: "Voelt als",
+    wind: "Wind",
+    humidity: "Vocht",
+    pressure: "Druk",
+    pressureNext: "over 3 u",
+    moonHigh: "hoogst",
+    gust: "windstoten",
+    forecastFrom: "voorspelling van",
+    stale: "Verouderd",
+    fetching: "Voorspelling ophalen…",
+    searchPlaceholder: "Zoek plaats",
+    noResults: "Geen plaatsen gevonden",
+    noLocation: "Kies een plaats om het weer te zien",
+    chooseLocation: "Kies plaats",
+    precipitation: "Neerslag",
+    rain: "Regen",
+    sleet: "Natte sneeuw",
+    snow: "Sneeuw",
+    nowcastDry: "Droog de komende {n} min",
+    nowcastWetAll: "{kind} de komende {n} min",
+    nowcastStopping: "{kind} nu, stopt over ca. {n} min",
+    nowcastStarting: "{kind} over ca. {n} min",
     radar: "Radar",
-    radarLoading: "Hämtar radar…",
+    radarLoading: "Radar laden…",
     radarNow: "Nu",
-    radarFrom: "Radar från {time}",
-    radarGaps: "Luckor i yr.no:s radar – tiden kan hoppa mellan bilder",
-    forecastWord: "Prognos",
+    radarFrom: "Radar van {time}",
+    radarGaps: "Hiaten in de radar – de tijd kan springen tussen beelden",
+    forecastWord: "Voorspelling",
     symbols: {
-      clearsky: "Klart",
-      fair: "Vackert",
-      partlycloudy: "Växlande",
-      cloudy: "Mulet",
-      fog: "Dimma"
-    }
-  },
-  // Bokmål, also for Nynorsk and plain "no" locales.
-  nb: {
-    locales: ["nb", "nn", "no"],
-    decimal: ",",
-    dayDate: "{day}. {month}",
-    hour: "t",
-    geocode: "no",
-    precip: {
-      rain: ["regn", "regnbyger"],
-      sleet: ["sludd", "sluddbyger"],
-      snow: ["snø", "snøbyger"],
-      light: ["lett", "lette"],
-      heavy: ["kraftig", "kraftige"],
-      thunder: " og torden"
-    },
-    today: "I dag",
-    tomorrow: "I morgen",
-    months: ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"],
-    weekdays: ["Søndag", "Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag"],
-    weekdaysShort: ["Søn", "Man", "Tir", "Ons", "Tor", "Fre", "Lør"],
-    compass: ["N", "NØ", "Ø", "SØ", "S", "SV", "V", "NV"],
-    moonPhases: ["Nymåne", "Voksende månesigd", "Første kvarter", "Voksende måne",
-                 "Fullmåne", "Minkende måne", "Siste kvarter", "Minkende månesigd"],
-    feels: "Føles som",
-    wind: "Vind",
-    humidity: "Fukt",
-    pressure: "Trykk",
-    pressureNext: "på 3 t",
-    moonHigh: "høyest",
-    gust: "kast",
-    forecastFrom: "prognose fra",
-    stale: "Utdatert",
-    fetching: "Henter prognose…",
-    searchPlaceholder: "Søk etter sted",
-    noResults: "Fant ingen steder",
-    noLocation: "Velg et sted for å se været",
-    chooseLocation: "Velg sted",
-    precipitation: "Nedbør",
-    rain: "Regn",
-    sleet: "Sludd",
-    snow: "Snø",
-    nowcastDry: "Opphold neste {n} min",
-    nowcastWetAll: "{kind} neste {n} min",
-    nowcastStopping: "{kind} nå, gir seg om ca. {n} min",
-    nowcastStarting: "{kind} om ca. {n} min",
-    radar: "Radar",
-    radarLoading: "Henter radar…",
-    radarNow: "Nå",
-    radarFrom: "Radar fra {time}",
-    radarGaps: "Hull i yr.no-radaren – tiden kan hoppe mellom bildene",
-    forecastWord: "Prognose",
-    symbols: {
-      clearsky: "Klarvær",
-      fair: "Lettskyet",
-      partlycloudy: "Delvis skyet",
-      cloudy: "Skyet",
-      fog: "Tåke"
-    }
-  },
-  da: {
-    locales: ["da"],
-    decimal: ",",
-    dayDate: "{day}. {month}",
-    hour: "t",
-    geocode: "da",
-    precip: {
-      rain: ["regn", "regnbyger"],
-      sleet: ["slud", "sludbyger"],
-      snow: ["sne", "snebyger"],
-      light: ["let", "lette"],
-      heavy: ["kraftig", "kraftige"],
-      thunder: " og torden"
-    },
-    today: "I dag",
-    tomorrow: "I morgen",
-    months: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
-    weekdays: ["Søndag", "Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag"],
-    weekdaysShort: ["Søn", "Man", "Tir", "Ons", "Tor", "Fre", "Lør"],
-    compass: ["N", "NØ", "Ø", "SØ", "S", "SV", "V", "NV"],
-    moonPhases: ["Nymåne", "Tiltagende månesegl", "Første kvarter", "Tiltagende måne",
-                 "Fuldmåne", "Aftagende måne", "Sidste kvarter", "Aftagende månesegl"],
-    feels: "Føles som",
-    wind: "Vind",
-    humidity: "Fugt",
-    pressure: "Tryk",
-    pressureNext: "på 3 t",
-    moonHigh: "højest",
-    gust: "stød",
-    forecastFrom: "prognose fra",
-    stale: "Forældet",
-    fetching: "Henter prognose…",
-    searchPlaceholder: "Søg sted",
-    noResults: "Ingen steder fundet",
-    noLocation: "Vælg et sted for at se vejret",
-    chooseLocation: "Vælg sted",
-    precipitation: "Nedbør",
-    rain: "Regn",
-    sleet: "Slud",
-    snow: "Sne",
-    nowcastDry: "Tørvejr de næste {n} min",
-    nowcastWetAll: "{kind} de næste {n} min",
-    nowcastStopping: "{kind} nu, stopper om ca. {n} min",
-    nowcastStarting: "{kind} om ca. {n} min",
-    radar: "Radar",
-    radarLoading: "Henter radar…",
-    radarNow: "Nu",
-    radarFrom: "Radar fra {time}",
-    radarGaps: "Huller i yr.no's radar – tiden kan springe mellem billederne",
-    forecastWord: "Prognose",
-    symbols: {
-      clearsky: "Klart",
-      fair: "Let skyet",
-      partlycloudy: "Delvis skyet",
-      cloudy: "Skyet",
-      fog: "Tåge"
-    }
-  },
-  // Finnish. The precipitation words are partitive ("Heikkoa vesisadetta",
-  // "Voimakkaita lumikuuroja"), the nowcast kinds nominative ("Vesisade
-  // alkaa…").
-  fi: {
-    locales: ["fi"],
-    decimal: ",",
-    dayDate: "{day}.{monthNumber}.",
-    hour: "h",
-    geocode: "fi",
-    precip: {
-      rain: ["vesisadetta", "sadekuuroja"],
-      sleet: ["räntäsadetta", "räntäkuuroja"],
-      snow: ["lumisadetta", "lumikuuroja"],
-      light: ["heikkoa", "heikkoja"],
-      heavy: ["voimakasta", "voimakkaita"],
-      thunder: " ja ukkosta"
-    },
-    today: "Tänään",
-    tomorrow: "Huomenna",
-    months: ["tammi", "helmi", "maalis", "huhti", "touko", "kesä", "heinä", "elo", "syys", "loka", "marras", "joulu"],
-    weekdays: ["Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai"],
-    weekdaysShort: ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
-    compass: ["P", "KO", "I", "KA", "E", "LO", "L", "LU"],
-    moonPhases: ["Uusikuu", "Kasvava kuunsirppi", "Ensimmäinen neljännes", "Kasvava kuu",
-                 "Täysikuu", "Vähenevä kuu", "Viimeinen neljännes", "Vähenevä kuunsirppi"],
-    feels: "Tuntuu kuin",
-    wind: "Tuuli",
-    humidity: "Kosteus",
-    pressure: "Paine",
-    pressureNext: "/ 3 h",
-    moonHigh: "ylimmillään",
-    gust: "puuskat",
-    forecastFrom: "ennuste klo",
-    stale: "Vanhentunut",
-    fetching: "Haetaan ennustetta…",
-    searchPlaceholder: "Hae paikkaa",
-    noResults: "Paikkoja ei löytynyt",
-    noLocation: "Valitse paikka nähdäksesi sään",
-    chooseLocation: "Valitse paikka",
-    precipitation: "Sade",
-    rain: "Vesisade",
-    sleet: "Räntäsade",
-    snow: "Lumisade",
-    nowcastDry: "Poutaa seuraavat {n} min",
-    nowcastWetAll: "{kind} jatkuu seuraavat {n} min",
-    nowcastStopping: "{kind} nyt, loppuu noin {n} min kuluttua",
-    nowcastStarting: "{kind} alkaa noin {n} min kuluttua",
-    radar: "Tutka",
-    radarLoading: "Ladataan tutkaa…",
-    radarNow: "Nyt",
-    radarFrom: "Tutka klo {time}",
-    radarGaps: "Aukkoja yr.no:n tutkassa – aika voi hypätä kuvien välillä",
-    forecastWord: "Ennuste",
-    symbols: {
-      clearsky: "Selkeää",
-      fair: "Melko selkeää",
-      partlycloudy: "Puolipilvistä",
-      cloudy: "Pilvistä",
-      fog: "Sumua"
+      clearsky: "Helder",
+      fair: "Licht bewolkt",
+      partlycloudy: "Half bewolkt",
+      cloudy: "Bewolkt",
+      fog: "Mist"
     }
   },
   en: {
@@ -327,7 +150,7 @@ var STRINGS = {
     radarLoading: "Loading radar…",
     radarNow: "Now",
     radarFrom: "Radar from {time}",
-    radarGaps: "Gaps in yr.no's radar: expect time jumps between frames",
+    radarGaps: "Gaps in the radar: expect time jumps between frames",
     forecastWord: "Forecast",
     symbols: {
       clearsky: "Clear sky",
@@ -472,8 +295,13 @@ function forecastUrl(location) {
   return url
 }
 
+// Buienradar's "raintext": rain nearest a point, five-minute steps, about
+// two hours ahead. Undocumented, like the rest of Buienradar's public
+// endpoints, but the one the Dutch developer community has relied on for
+// years; it wants 2-decimal coordinates.
 function nowcastUrl(location) {
-  return MET_BASE + "/nowcast/2.0/complete?" + coordQuery(location)
+  return "https://gpsgadget.buienradar.nl/data/raintext?lat=" + Number(location.latitude).toFixed(2)
+    + "&lon=" + Number(location.longitude).toFixed(2)
 }
 
 function sunUrl(location, ms) {
@@ -496,16 +324,15 @@ function geocodeUrl(query, lang) {
 // compressed one that expands to gigabytes) must end the transfer instead.
 // curl counts the decompressed bytes, stops at the limit (exit 63), and the
 // cut-off body fails to parse like any other broken response. Real
-// responses stay far below: the forecast is ~90 KB, the rest a few KB, and
-// lightning grows with the strikes of the last two hours. Radar tiles
-// (~3 KB) go to disk, not into memory, and have their own limit.
+// responses stay far below: the forecast is ~90 KB, the rest a few KB.
+// Radar frames go to disk, not into memory, and have their own limit.
 var MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 var MAX_TILE_BYTES = 1024 * 1024
 
-// Which service a request kind goes to: yr.no's radar and lightning, or
-// MET's API (forecast, nowcast, sun, moon). Throttling is per service.
+// Which service a request kind goes to: Buienradar (nowcast and radar), or
+// MET's API (forecast, sun, moon). Throttling is per service.
 function requestService(kind) {
-  return kind === "yrObs" || kind === "yrNow" || kind === "lightning" ? "yr" : "met"
+  return kind === "nowcast" || kind === "radar" ? "br" : "met"
 }
 
 // argv for one request. `-D -` puts the response headers ahead of the body
@@ -765,6 +592,29 @@ function parseSun(text) {
     riseMs: p.sunrise ? parseIsoMs(p.sunrise.time) : NaN,
     setMs: p.sunset ? parseIsoMs(p.sunset.time) : NaN
   }
+}
+
+// raintext body → the shape buildNowcast expects: one line per 5-minute
+// step, "VALUE|HH:MM" (VALUE 0-255 on Buienradar's logarithmic scale; 0 is
+// dry, the formula below is their published conversion to mm/h). Lines run
+// forward about two hours, so a clock hour earlier than the line before it
+// means the steps rolled past midnight.
+function parseRaintext(text, nowMs) {
+  var lines = String(text || "").split(/\r?\n/)
+  var steps = []
+  var dayMs = localDayStart(nowMs, 0)
+  var lastHour = -1
+  for (var i = 0; i < lines.length; i++) {
+    var m = /^(\d{1,3})\|(\d{2}):(\d{2})\s*$/.exec(lines[i].trim())
+    if (!m) continue
+    var hour = parseInt(m[2], 10)
+    if (hour < lastHour - 1) dayMs += DAY_MS
+    lastHour = hour
+    var value = parseInt(m[1], 10)
+    var rate = value <= 0 ? 0 : Math.pow(10, (value - 109) / 32)
+    steps.push({ ms: dayMs + hour * HOUR_MS + parseInt(m[3], 10) * 60000, instant: { precipitation_rate: rate } })
+  }
+  return { meta: { radar_coverage: steps.length >= 2 ? "ok" : "" }, steps: steps }
 }
 
 // ---------------------------------------------------------------- location
@@ -1273,318 +1123,113 @@ function buildView(input) {
   return view
 }
 
-// ---------------------------------------------------------------- radar map
+// ---------------------------------------------------------------- Buienradar radar map
 
-// ---------------------------------------------------------------- lightning
-
-// Lightning strikes in the Nordics from yr.no's lightning map (undocumented,
-// like its radar tiles): the last 2 hours, which covers the radar loop's past
-// plus the time a strike stays on the map.
-var YR_LIGHTNING_URL = "https://www.yr.no/api/v0/lightning-events?fromHours=2"
-// A strike's bolt shows in the frame it falls in, and dimmer in the next;
-// a small dot marks it for this long.
-var LIGHTNING_FRAME_MS = 5 * 60000
-var LIGHTNING_TRAIL_MS = 10 * 60000
-
-// yr.no's body: { historicalData: "[[time (s), lon, lat, …], …]" } (a JSON
-// string inside JSON). → [{ ms, lat, lon, shape }] oldest first, or null
-// when unreadable.
-function parseLightning(text) {
-  var data = parseJson(text)
-  if (!data || typeof data.historicalData !== "string") return null
-  var events = parseJson(data.historicalData)
-  if (!Array.isArray(events)) return null
-  var out = []
-  for (var i = 0; i < events.length; i++) {
-    var e = events[i]
-    if (!Array.isArray(e) || !isNum(e[0]) || !isNum(e[1]) || !isNum(e[2])) continue
-    out.push({ ms: e[0] * 1000, lon: e[1], lat: e[2], shape: lightningShape(lightningSeed(e[0], e[1], e[2])) })
-  }
-  out.sort(function(a, b) { return a.ms - b.ms })
-  return out
-}
-
-// Which moment the map shows strikes for at a radar frame, or null for a
-// forecast frame (strikes can't be forecast). Past frames: the frame's
-// time. The newest observation ("now"): the latest strike data, which runs
-// ahead of the radar.
-function lightningMoment(frameMs, nowFrameMs, dataMs) {
-  if (frameMs > nowFrameMs) return null
-  return frameMs < nowFrameMs ? frameMs : Math.max(nowFrameMs, isNum(dataMs) ? dataMs : 0)
-}
-
-// Which strikes get a bolt at a moment (ms), from lightningPoints:
-// { fresh, after }. Fresh: the moment's own 5 minutes; after: the 5
-// minutes before (drawn dimmer). Newest first, a bolt within 10 px of one
-// already chosen is left out, so a dense cell reads as separate bolts.
-function lightningBolts(points, moment) {
-  var fresh = [], after = [], chosen = []
-  for (var i = points.length - 1; i >= 0; i--) {
-    var p = points[i]
-    var age = moment - p.ms
-    if (age < 0) continue
-    if (age >= 2 * LIGHTNING_FRAME_MS) break
-    var near = false
-    for (var d = 0; d < chosen.length && !near; d++)
-      near = Math.abs(chosen[d].x - p.x) < 10 && Math.abs(chosen[d].y - p.y) < 10
-    if (near) continue
-    chosen.push(p)
-    if (age < LIGHTNING_FRAME_MS) fresh.push(p)
-    else after.push(p)
-  }
-  return { fresh: fresh, after: after }
-}
-
-// A bolt's shape in px, ending at the strike (0, 0): a jagged main channel
-// from above, sometimes forking once or twice partway down. The same seed
-// always gives the same bolt.
-function lightningRandom(seed) {
-  var a = seed >>> 0
-  return function() {
-    a = (a + 0x6D2B79F5) >>> 0
-    var t = a
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-// Midpoint displacement: each pass kinks every segment sideways by up to
-// `spread` of its length, so the zigzags come in several sizes.
-function lightningJagged(rand, x0, y0, x1, y1, passes, spread) {
-  var pts = [[x0, y0], [x1, y1]]
-  for (var d = 0; d < passes; d++) {
-    var next = [pts[0]]
-    for (var i = 1; i < pts.length; i++) {
-      var a = pts[i - 1], b = pts[i]
-      var dx = b[0] - a[0], dy = b[1] - a[1]
-      var len = Math.sqrt(dx * dx + dy * dy) || 1
-      var off = (rand() - 0.5) * spread * len
-      next.push([(a[0] + b[0]) / 2 - dy / len * off, (a[1] + b[1]) / 2 + dx / len * off])
-      next.push(b)
-    }
-    pts = next
-  }
-  return pts
-}
-
-function lightningShape(seed) {
-  var rand = lightningRandom(seed)
-  var h = 13 + rand() * 9
-  var main = lightningJagged(rand, (rand() - 0.5) * 8, -h, 0, 0, 3, 0.75)
-  var branches = []
-  var count = rand() < 0.5 ? (rand() < 0.3 ? 2 : 1) : 0
-  for (var k = 0; k < count; k++) {
-    var from = main[1 + Math.floor(rand() * Math.floor(main.length * 0.55))]
-    var side = rand() < 0.5 ? -1 : 1
-    var len = h * (0.3 + rand() * 0.35)
-    var angle = (25 + rand() * 35) * Math.PI / 180
-    branches.push(lightningJagged(rand, from[0], from[1],
-      from[0] + side * Math.sin(angle) * len, from[1] + Math.cos(angle) * len, 2, 0.8))
-  }
-  return { main: main, branches: branches }
-}
-
-// A seed from a strike's time (s) and place, stable across views.
-function lightningSeed(timeS, lon, lat) {
-  return (Math.imul(timeS | 0, 2654435761) ^ Math.imul(Math.round(lon * 1e4), 40503) ^ Math.round(lat * 1e4)) >>> 0
-}
-
-// Strikes in a view's pixels, oldest first, dropping those more than
-// `margin` px outside the width×height map.
-function lightningPoints(strikes, view, width, height, margin) {
-  var out = []
-  if (!view) return out
-  for (var i = 0; i < strikes.length; i++) {
-    var w = worldTile(strikes[i].lat, strikes[i].lon, view.z)
-    var x = w.x * view.px - view.left, y = w.y * view.px - view.top
-    if (x < -margin || y < -margin || x > width + margin || y > height + margin) continue
-    out.push({ x: x, y: y, ms: strikes[i].ms, shape: strikes[i].shape })
-  }
-  out.sort(function(a, b) { return a.ms - b.ms })
-  return out
-}
-
-// ---------------------------------------------------------------- yr.no radar map
-
-// A radar map like yr.no's: our own base map (tiles rendered from
-// OpenStreetMap data by scripts/build-basemap.py, shipped in map/) with
-// yr.no's radar tiles on top, in 5-minute steps: past observations followed
-// by a 2-hour nowcast. The radar tiles come from yr.no's undocumented tile
-// server. Everything uses the standard Web Mercator XYZ tile scheme.
-var YR_TILES = "https://tiles.yr.no"
-var YR_RADAR_OBS_INDEX = YR_TILES + "/api/precipitation-observations/available.json"
-var YR_RADAR_NOWCAST_INDEX = YR_TILES + "/api/precipitation-nowcast/available.json"
-// The radar tiles stop at zoom 6; at 7 they are drawn scaled up.
-var YR_RADAR_ZOOM = 6
-var MAP_TILE_PX = 256
+// The Netherlands' national precipitation radar, from Buienradar's public
+// (undocumented) sprite-metadata endpoint: one ready-rendered PNG per
+// 5-minute step, history behind "now" plus a short nowcast ahead of it,
+// covering the Netherlands and the fringes of Belgium, Germany and the UK.
+// Unlike yr.no's raw XYZ tiles (which the original Nordic build had to
+// composite onto its own OpenStreetMap base map), each frame already
+// includes its own rendered map, so there is no tile math or ImageMagick
+// compositing here: every frame is simply downloaded and shown as-is.
+//
+// Free for non-commercial use; Buienradar asks for attribution with a link
+// to https://www.buienradar.nl (see README).
+var BR_RADAR_METADATA_URL = "https://image.buienradar.nl/2.0/metadata/sprite/RadarMapRainWebmercatorNL"
+var BR_RADAR_WIDTH = 700
+var BR_RADAR_HEIGHT = 606
+// 5-minute steps behind and ahead of "now".
+var BR_RADAR_HISTORY = 12  // 1 hour of observations
+var BR_RADAR_FORECAST = 6  // 30 minutes of nowcast
 // Credited after MET Norway, under the radar map.
-var MAP_ATTRIBUTION = " · OpenStreetMap · yr.no"
-// Zoom steps: which tiles, drawn at how many px per tile. Step 1 draws the
-// zoom-6 tiles at 181 px (≈ zoom 5.5: shrinking keeps them sharp). Across
-// the 659 px map: ≈1700 km, 1200 km, 850 km, 425 km. Keep in sync with
-// DISPLAY_STEPS in scripts/build-basemap.py.
-var MAP_ZOOM_STEPS = [
-  { z: 5, px: 0, overview: true, minPop: 150000 },  // px: fitted to the coverage
-  { z: 6, px: 181, minPop: 70000 },
-  { z: 6, px: 256, minPop: 40000 },
-  { z: 7, px: 256, minPop: 10000 }
-]
-var MAP_DEFAULT_STEP = 1
+var RADAR_ATTRIBUTION = " · Buienradar"
 
-// Where yr.no's radar has data (the Nordic radar network), measured from
-// its tiles, which are white outside coverage. Views never leave this box,
-// so the map never shows land where rain could not appear. Keep in sync
-// with COVERAGE in scripts/build-basemap.py.
-var RADAR_COVERAGE = { west: 0.5, south: 54.2, east: 35.5, north: 72.8 }
-
-// The coverage box in tile units at zoom z.
-function coverageTiles(z) {
-  var nw = worldTile(RADAR_COVERAGE.north, RADAR_COVERAGE.west, z)
-  var se = worldTile(RADAR_COVERAGE.south, RADAR_COVERAGE.east, z)
-  return { x0: nw.x, y0: nw.y, x1: se.x, y1: se.y }
+function radarIndexUrl() {
+  return BR_RADAR_METADATA_URL + "?width=" + BR_RADAR_WIDTH + "&height=" + BR_RADAR_HEIGHT
+    + "&extension=png&renderBackground=true&renderText=false&renderBranding=false"
+    + "&history=" + BR_RADAR_HISTORY + "&forecast=" + BR_RADAR_FORECAST + "&skip=0"
 }
 
-// Centre on c but keep a view of ±half inside [lo, hi]; centre the box if
-// the view is bigger than it.
-function clampCenter(c, lo, hi, half) {
-  if (hi - lo <= 2 * half) return (lo + hi) / 2
-  return Math.max(lo + half, Math.min(hi - half, c))
+// Where Buienradar's national composite has data (its render bounds).
+// Locations outside this box get no nowcast and no marker on the radar map.
+var RADAR_COVERAGE = { west: 0, south: 49.5, east: 10, north: 54.8 }
+
+function hasRainCoverage(location) {
+  return hasCoordinates(location) && location.latitude >= RADAR_COVERAGE.south && location.latitude <= RADAR_COVERAGE.north
+    && location.longitude >= RADAR_COVERAGE.west && location.longitude <= RADAR_COVERAGE.east
 }
 
-// What a width×height map shows at a zoom step:
-//   { z, px, left, top, markerX, markerY, minPop }
-// left/top: integer world-pixel offset of the view (world pixels = tile
-// units × px). The overview frames the whole coverage; closer steps centre
-// on the location, shifted as needed to stay inside the coverage, so the
-// marker is not always in the middle.
-// Boxes smaller than this (a panel mid-layout) get no view at all.
-var MAP_MIN_BOX_PX = 64
-
-function mapView(step, lat, lon, width, height) {
-  if (!(width >= MAP_MIN_BOX_PX && height >= MAP_MIN_BOX_PX) || !isNum(lat) || !isNum(lon)) return null
-  var s = MAP_ZOOM_STEPS[clampMapStep(step)]
-  var b = coverageTiles(s.z)
-  var px = s.overview
-    ? Math.max(1, Math.min(MAP_TILE_PX, Math.floor(Math.min(width / (b.x1 - b.x0), height / (b.y1 - b.y0)))))
-    : s.px
-  var loc = worldTile(lat, lon, s.z)
-  var cx = s.overview ? (b.x0 + b.x1) / 2 : clampCenter(loc.x, b.x0, b.x1, width / px / 2)
-  var cy = s.overview ? (b.y0 + b.y1) / 2 : clampCenter(loc.y, b.y0, b.y1, height / px / 2)
-  var left = Math.round(cx * px - width / 2)
-  var top = Math.round(cy * px - height / 2)
-  return { z: s.z, px: px, left: left, top: top,
-           markerX: loc.x * px - left, markerY: loc.y * px - top, minPop: s.minPop }
-}
-
-function clampMapStep(step) {
-  var n = parseInt(step, 10)
-  if (isNaN(n)) return MAP_DEFAULT_STEP
-  return Math.max(0, Math.min(MAP_ZOOM_STEPS.length - 1, n))
-}
-
-// Radar tiles for a view: their zoom (≤ 6) and px per radar tile. They share
-// the view's world-pixel space, so left/top stay the same.
-function radarView(view) {
-  if (!view) return null
-  var z = Math.min(view.z, YR_RADAR_ZOOM)
-  return { z: z, px: view.px * Math.pow(2, view.z - z), left: view.left, top: view.top }
-}
-
-// Base map tile, relative to the plugin folder.
-function mapTilePath(tile) {
-  return "map/tiles/" + tile.z + "/" + tile.x + "/" + tile.y + ".png"
-}
-
-// Position in tile units at zoom z.
-function worldTile(lat, lon, z) {
-  var n = Math.pow(2, z)
+// Standard Web Mercator y (radians of longitude-equivalent "unrolled"
+// latitude); monotonic, so it can be linearly interpolated between bounds.
+function mercatorY(lat) {
   var latRad = lat * Math.PI / 180
-  return {
-    x: (lon + 180) / 360 * n,
-    y: (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n
-  }
+  return Math.log(Math.tan(Math.PI / 4 + latRad / 2))
 }
 
-// Tiles covering a width×height view ({ z, px, left, top }, as from mapView
-// or radarView). left/top are integers, so neighbouring tiles meet without
-// seams, and zoom levels drawn at matching scales (e.g. base z7 @256 px,
-// radar z6 @512 px) line up exactly.
-// Guarded against looping forever: a tile size of 0 makes both loop bounds
-// -Infinity (and -Infinity + 1 is still -Infinity), which would hang the shell.
-var MAP_MAX_TILES = 400
-
-function viewTiles(view, width, height) {
-  if (!view || !(view.px >= 1) || !isNum(view.left) || !isNum(view.top)
-      || !(width >= 1) || !(height >= 1)) return []
-  var z = view.z
-  var tilePx = view.px
-  var n = Math.pow(2, z)
-  var left = view.left
-  var top = view.top
-  var x0 = Math.floor(left / tilePx), x1 = Math.floor((left + width - 1) / tilePx)
-  var y0 = Math.floor(top / tilePx), y1 = Math.floor((top + height - 1) / tilePx)
-  if ((x1 - x0 + 1) * (y1 - y0 + 1) > MAP_MAX_TILES) return []
-  var tiles = []
-  for (var tx = x0; tx <= x1; tx++) {
-    for (var ty = y0; ty <= y1; ty++) {
-      if (ty < 0 || ty >= n) continue
-      var tile = { z: z, x: ((tx % n) + n) % n, y: ty, left: tx * tilePx - left, top: ty * tilePx - top, size: tilePx }
-      tile.key = [tile.z, tile.x, tile.y, tile.left, tile.top, tile.size].join("/")
-      tiles.push(tile)
-    }
-  }
-  return tiles
+// A point's pixel position on Buienradar's fixed-size render of
+// RADAR_COVERAGE (there is no server-side pan or zoom, unlike the old
+// tile-based map, so this is a plain linear projection into its bounds),
+// or null outside them.
+function radarMarkerPosition(lat, lon) {
+  if (!isNum(lat) || !isNum(lon)) return null
+  var x = (lon - RADAR_COVERAGE.west) / (RADAR_COVERAGE.east - RADAR_COVERAGE.west) * BR_RADAR_WIDTH
+  var yN = mercatorY(RADAR_COVERAGE.north), yS = mercatorY(RADAR_COVERAGE.south)
+  var y = (mercatorY(lat) - yN) / (yS - yN) * BR_RADAR_HEIGHT
+  if (x < 0 || y < 0 || x > BR_RADAR_WIDTH || y > BR_RADAR_HEIGHT) return null
+  return { x: x, y: y }
 }
 
-function tileUrl(template, z, x, y) {
-  return String(template).replace("{z}", z).replace("{x}", x).replace("{y}", y)
+// A short, stable, filename-safe id for a frame's image URL: Buienradar
+// hands out a fresh URL per forecast run, so this changes with it and the
+// cache never mixes frames from different runs; an observation's URL (and
+// so its id) stays the same, and its file is reused across fetches.
+function stableHash(text) {
+  var h = 5381
+  var s = String(text || "")
+  for (var i = 0; i < s.length; i++) h = (Math.imul(h, 33) ^ s.charCodeAt(i)) >>> 0
+  return h.toString(36)
 }
 
-// Cache file name of a radar tile of a frame ({ timeMs, runId, forecast }).
-function radarTileFile(tile, frame) {
-  return "r_" + radarFrameId(frame) + "_" + tile.z + "_" + tile.x + "_" + tile.y + ".png"
-}
-
-// What makes a frame's images unique. Every index update has its own run id
-// in the tile URL (…/<run id>/<time>/tiles/…). A forecast for the same time
-// differs between runs, so forecast frames are keyed by run and time (or a
-// loop would stitch different forecasts together, visible as rain jumping
-// back and forth). An observation is the same image in every run, so it is
-// keyed by time alone and stays cached across updates: only the newest
-// observation and the new forecast need fetching.
 function radarFrameId(frame) {
-  return (frame.forecast && frame.runId ? frame.runId + "_" : "") + frame.timeMs
+  return frame.timeMs + "_" + stableHash(frame.url)
 }
 
-// Each run's id, from a tile URL template.
-function tileRunId(template) {
-  var m = /\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\//i.exec(String(template || ""))
-  return m ? m[1].replace(/-/g, "").toLowerCase() : ""
+function radarFrameFile(frame) {
+  return "f_" + radarFrameId(frame) + ".png"
 }
 
-// Tile index body → [{ timeMs, template, runId }], oldest first.
-function parseTileIndex(text) {
+// Metadata body → [{ timeMs, url }], oldest first.
+function parseRadarIndex(text) {
   var data = parseJson(text)
   var times = data && Array.isArray(data.times) ? data.times : []
   var out = []
   for (var i = 0; i < times.length; i++) {
-    var ms = parseIsoMs(times[i].time)
-    var template = times[i].tiles && times[i].tiles.png
-    if (isNum(ms) && typeof template === "string")
-      out.push({ timeMs: ms, template: template, runId: tileRunId(template) })
+    var ms = parseIsoMs(times[i].timestamp)
+    var url = times[i].url
+    if (isNum(ms) && typeof url === "string" && url !== "") out.push({ timeMs: ms, url: url })
   }
   out.sort(function(a, b) { return a.timeMs - b.timeMs })
   return out
 }
 
+// The whole timeline in one response (history then nowcast). nowIndex is
+// the last observed frame, from how many forecast frames were asked for
+// (BR_RADAR_FORECAST) rather than the clock, so it stays right however many
+// of either Buienradar actually returned.
+function radarFrames(text) {
+  var all = parseRadarIndex(text)
+  var nowIndex = all.length ? Math.max(-1, all.length - 1 - BR_RADAR_FORECAST) : -1
+  var frames = []
+  for (var i = 0; i < all.length; i++) frames.push({ timeMs: all[i].timeMs, url: all[i].url, forecast: i > nowIndex })
+  return { frames: frames, nowIndex: nowIndex }
+}
+
 // How long ago our copy of the radar index may have been fetched for its
 // loop to be shown. An older copy (the computer slept, the network is
-// down) is worse than an empty map: it looks current but isn't. What
-// counts is our fetch, not the newest observation: when yr.no itself runs
-// late, the index just fetched is still the freshest radar there is.
+// down) is worse than an empty map: it looks current but isn't.
 var RADAR_MAX_AGE_MS = 30 * 60000
-// yr.no's newest observation older than this is shown as late
+// Buienradar's newest observation older than this is shown as late
 // (radarDelayNote).
 var RADAR_LATE_MS = 15 * 60000
 
@@ -1597,8 +1242,8 @@ function radarUsable(radar, nowMs, awaiting, fetchedMs) {
   return isNum(fetchedMs) && nowMs - fetchedMs <= RADAR_MAX_AGE_MS
 }
 
-// A note when frames are missing from yr.no's loop (neighbours more than
-// 1.5 steps apart, e.g. an outage), so the jumps in time aren't taken for a
+// A note when frames are missing from the loop (neighbours more than 1.5
+// steps apart, e.g. an outage), so the jumps in time aren't taken for a
 // bug; "" otherwise.
 function radarGapNote(frames, lang) {
   for (var i = 1; i < (frames || []).length; i++)
@@ -1606,45 +1251,19 @@ function radarGapNote(frames, lang) {
   return ""
 }
 
-// "Radar från 13:15" when yr.no's newest observation (newestMs) is more than
-// RADAR_LATE_MS old, so the ruler's "now" isn't taken for the present;
-// "" otherwise.
+// "Radar van 13:15" when Buienradar's newest observation (newestMs) is more
+// than RADAR_LATE_MS old, so the ruler's "now" isn't taken for the
+// present; "" otherwise.
 function radarDelayNote(newestMs, nowMs, lang) {
   if (!isNum(newestMs) || !(newestMs > 0) || nowMs - newestMs <= RADAR_LATE_MS) return ""
   return fill(strings(lang).radarFrom, { time: localClock(newestMs) })
 }
 
-// Observations, then nowcast frames after the last observation.
-// nowIndex is the last observed frame (-1 without observations).
-function radarFrames(obsText, nowcastText) {
-  var obs = parseTileIndex(obsText)
-  var lastObs = obs.length ? obs[obs.length - 1].timeMs : -Infinity
-  var frames = []
-  for (var i = 0; i < obs.length; i++)
-    frames.push({ timeMs: obs[i].timeMs, template: obs[i].template, runId: obs[i].runId, forecast: false })
-  var nowcast = parseTileIndex(nowcastText)
-  for (var j = 0; j < nowcast.length; j++) {
-    if (nowcast[j].timeMs > lastObs)
-      frames.push({ timeMs: nowcast[j].timeMs, template: nowcast[j].template, runId: nowcast[j].runId, forecast: true })
-  }
-  return { frames: frames, nowIndex: obs.length - 1 }
-}
-
-// The frame whose no-coverage areas the whole loop uses: its latest
-// observation, or while the loop is still being assembled and that frame
-// isn't yet, the newest one that is.
-function radarCoverageIndex(loop) {
-  var ready = loop.ready === undefined ? loop.frames.length : loop.ready
-  return Math.max(0, Math.min(loop.nowIndex, ready - 1))
-}
-
 // Three rotating image slots give the next frame a whole source-frame
 // interval to load before it is sampled. Two-frame loops use two slots.
-// `ready`: of a loop still loading, the frames assembled so far (a prefix);
-// slots never point past them.
-function radarImageSlots(frames, frame, tick, ready) {
+function radarImageSlots(frames, frame, tick) {
   var slots = [null, null, null]
-  var n = Math.min(frames.length, ready === undefined ? frames.length : ready)
+  var n = frames.length
   var count = Math.min(3, n)
   if (!count) return { frames: slots, current: 0, upcoming: 0 }
   var current = tick % count
@@ -1653,16 +1272,12 @@ function radarImageSlots(frames, frame, tick, ready) {
   return { frames: slots, current: current, upcoming: (current + 1) % count }
 }
 
-// The radar loop's next position, one frame per timer tick: the next frame,
-// or the first after the last. A loop still loading (`ready` of its frames
-// assembled) waits on its newest frame instead, until more arrive; a frame
-// left over from another, longer loop restarts at the first.
-function radarStep(frame, tick, count, ready) {
-  var n = ready === undefined ? count : Math.min(ready, count)
-  if (count < 2 || n < 1) return { frame: 0, tick: tick }
-  if (frame >= n) return { frame: 0, tick: tick + 1 }
-  if (frame + 1 < n) return { frame: frame + 1, tick: tick + 1 }
-  return n < count ? { frame: frame, tick: tick } : { frame: 0, tick: tick + 1 }
+// The radar loop's next position, one frame per timer tick: the next
+// frame, or the first after the last.
+function radarStep(frame, tick, count) {
+  if (count < 2) return { frame: 0, tick: tick }
+  if (frame + 1 < count) return { frame: frame + 1, tick: tick + 1 }
+  return { frame: 0, tick: tick + 1 }
 }
 
 // Where a replacement loop carries on: the first of its frames at or after
@@ -1672,7 +1287,7 @@ function radarFrameAt(frames, timeMs) {
   return 0
 }
 
-// The time ruler on the yr.no map: one tick per frame. level is 1 at "now"
+// The time ruler on the radar map: one tick per frame. level is 1 at "now"
 // (the last observed frame) and falls off linearly towards both ends. Ticks
 // a whole number of hours from now get a stamp under the map ("−1 h", "Nu",
 // "+1 h") and are drawn a little stronger. The key covers everything a tick
@@ -1687,7 +1302,7 @@ function rulerTicks(frames, nowIndex, lang) {
     var offset = frames[i].timeMs - frames[now].timeMs
     var stamp = offset % HOUR_MS !== 0 ? ""
       : offset === 0 ? strings(lang).radarNow
-      : (offset < 0 ? "\u2212" : "+") + Math.abs(offset) / HOUR_MS + " " + strings(lang).hour
+      : (offset < 0 ? "−" : "+") + Math.abs(offset) / HOUR_MS + " " + strings(lang).hour
     var forecast = !!frames[i].forecast
     out.push({ index: i, level: level, stamp: stamp, forecast: forecast,
                key: frames[i].timeMs + "|" + level + "|" + stamp + "|" + forecast })
@@ -1695,143 +1310,26 @@ function rulerTicks(frames, nowIndex, lang) {
   return out
 }
 
-// "18:45" for an observed frame, "Prognos 19:15" for a nowcast frame.
+// "18:45" for an observed frame, "Voorspelling 19:15" for a nowcast frame.
 function mapFrameLabel(frame, lang) {
   if (!frame) return ""
   return (frame.forecast ? strings(lang).forecastWord + " " : "") + localClock(frame.timeMs)
 }
 
-// Identifies a frame list by its frames' ids (radarFrameId), so two lists
-// share a key only when they show the same images.
+// Identifies a frame list by its frames' images (radarFrameId), so two
+// lists share a key only when they show the same ones.
 function radarFramesKey(frames) {
   var parts = []
   for (var i = 0; i < (frames || []).length; i++) parts.push(radarFrameId(frames[i]))
   return parts.join(",")
 }
 
-// Every radar tile a map view needs, for every frame. → [{ url, file }]
-function radarDownloads(radarTiles, frames) {
-  var out = []
-  for (var f = 0; f < frames.length; f++) {
-    for (var r = 0; r < radarTiles.length; r++) {
-      var t = radarTiles[r]
-      out.push({ url: tileUrl(frames[f].template, t.z, t.x, t.y), file: radarTileFile(t, frames[f]) })
-    }
-  }
-  return out
-}
-
-// ---- Pre-assembled radar frames. Decoding 20–25 tiles per frame, 4 times
-// a second, is costly; one image the size of the map decodes ≈3× faster.
-// ImageMagick (in Omarchy's base packages) assembles each frame once, in the
-// background, after its tiles are downloaded.
-
-// Identifies a map view's geometry, so frames are rebuilt for a new view.
-function mapViewKey(view, width, height) {
-  return view ? [view.z, view.px, view.left, view.top, width, height].join("_") : ""
-}
-
-function radarFrameFile(frame, viewKey) {
-  return "f_" + radarFrameId(frame) + "_" + viewKey + ".png"
-}
-
-// One argument per frame: "frameFile|tileFile:left:top|…" (the radar view's
-// tiles for that frame).
-function frameComposeSpecs(radarTiles, frames, viewKey) {
-  var specs = []
-  for (var f = 0; f < frames.length; f++) {
-    var parts = [radarFrameFile(frames[f], viewKey)]
-    for (var i = 0; i < radarTiles.length; i++) {
-      var t = radarTiles[i]
-      parts.push(radarTileFile(t, frames[f]) + ":" + t.left + ":" + t.top)
-    }
-    specs.push(parts.join("|"))
-  }
-  return specs
-}
-
-// Assemble missing frames (4 at a time) on a black background, like the
-// tiles themselves, scaling tiles to the view's tile size. A frame with a
-// tile missing is left out rather than drawn with a hole. Each frame goes
-// via a temp file. Prints "<frames> <frames on disk>".
-function frameComposeCommand(dir, width, height, tilePx, specs) {
-  var script = 'dir=$1; w=$2; h=$3; px=$4; shift 4\n'
-    + 'compose() {\n'
-    + '  local IFS="|"; local parts=($1); local out="$dir/${parts[0]}"\n'
-    + '  [[ -s $out ]] && return 0\n'
-    + '  local args=(-size "${w}x${h}" xc:black) p f l t\n'
-    + '  for p in "${parts[@]:1}"; do\n'
-    + '    IFS=: read -r f l t <<< "$p"\n'
-    + '    [[ -s $dir/$f ]] || return 0\n'
-    + '    args+=("(" "$dir/$f" -resize "${px}x${px}!" ")" -geometry "$(printf "%+d%+d" "$l" "$t")" -composite)\n'
-    + '  done\n'
-    + '  magick -limit thread 1 "${args[@]}" -define png:compression-level=1 "PNG24:$out.part" 2>/dev/null && mv -f "$out.part" "$out" || rm -f "$out.part"\n'
-    + '}\n'
-    + 'n=0\n'
-    + 'for spec in "$@"; do compose "$spec" & n=$((n + 1)); (( n % 4 == 0 )) && wait; done\n'
-    + 'wait\n'
-    + 'find "$dir" -name "f_*.png" -mmin +120 -delete 2>/dev/null\n'
-    + 'made=0\n'
-    + 'for spec in "$@"; do [[ -s $dir/${spec%%|*} ]] && made=$((made + 1)); done\n'
-    + 'echo "$# $made"\n'
-  return ["bash", "-c", script, "bash", dir, String(width), String(height), String(tilePx)].concat(specs)
-}
-
-// Place labels for a map view. places.json names its columns in `fields`:
-// the local name, one name_<lang> per label language, lat, lon, population
-// and flags (1 capital, 2 city); rows most important first. A language
-// without its own column gets the English names. Picks what the zoom level
-// warrants and skips labels that would overlap each other or the marker's
-// own label.
-// charPx: average character width of the label font.
-function mapLabels(places, view, width, height, lang, charPx, markerName) {
-  if (!view || !(view.px >= 1) || !(charPx > 0)) return []
-  var rows = places && Array.isArray(places.places) ? places.places : []
-  var fields = places && Array.isArray(places.fields) ? places.fields : []
-  var col = function(name) { return fields.indexOf(name) }
-  var nameCol = [col("name_" + lang), col("name_en"), col("name")].filter(function(i) { return i >= 0 })[0]
-  var latCol = col("lat"), lonCol = col("lon"), popCol = col("population"), flagsCol = col("flags")
-  if (nameCol === undefined || latCol < 0 || lonCol < 0 || popCol < 0 || flagsCol < 0) return []
-  var z = view.z
-  var left = view.left
-  var top = view.top
-  var minPop = view.minPop
-  var lineH = Math.round(charPx * 2.2)
-  var taken = [{ x: view.markerX - 10, y: view.markerY - lineH / 2,
-                 w: 24 + String(markerName || "").length * charPx, h: lineH }]
-  var out = []
-  for (var i = 0; i < rows.length && out.length < 40; i++) {
-    var r = rows[i]
-    var flags = r[flagsCol]
-    if (!(flags & 1) && r[popCol] < minPop) continue
-    var t = worldTile(r[latCol], r[lonCol], z)
-    var x = t.x * view.px - left
-    var y = t.y * view.px - top
-    var name = r[nameCol]
-    var w = 10 + name.length * charPx
-    if (x < 4 || y < lineH || x + w > width - 4 || y > height - lineH) continue
-    var box = { x: x - 4, y: y - lineH / 2, w: w + 4, h: lineH }
-    var clash = false
-    for (var k = 0; k < taken.length && !clash; k++) {
-      var o = taken[k]
-      clash = box.x < o.x + o.w && o.x < box.x + box.w && box.y < o.y + o.h && o.y < box.y + box.h
-    }
-    if (clash) continue
-    taken.push(box)
-    out.push({ text: name, x: Math.round(x), y: Math.round(y), capital: (flags & 1) === 1,
-               key: name + "@" + Math.round(x) + "," + Math.round(y) })
-  }
-  return out
-}
-
-// Fetch the tiles that aren't cached yet (24 at a time over HTTP/2: the
-// tiles are ~3 KB, so request latency limits, not bandwidth; 24 gives
-// ≈180–250 tiles/s, 12 ≈130–180, and 48 is slower again), each via a temp
-// file so a failed transfer never leaves a broken tile, and prune radar
-// tiles older than 2 h.
-// Prints "<fetched> <missing>": missing counts the tiles still not on disk
-// afterwards (failed, or listed in the index before yr.no published them).
-function tileDownloadCommand(dir, downloads, agent) {
+// Fetch every frame not already cached (in parallel over HTTP/2, each via a
+// temp file so a failed transfer never leaves a broken image), and prune
+// frames older than 2 h. Prints "<fetched> <missing>": missing counts the
+// frames still not on disk afterwards (failed, or not yet published by
+// Buienradar).
+function radarDownloadCommand(dir, frames, agent) {
   var script = 'dir=$1; ua=$2; max=$3; shift 3\n'
     + 'mkdir -p "$dir"\n'
     + 'args=(); parts=(); files=()\n'
@@ -1841,7 +1339,7 @@ function tileDownloadCommand(dir, downloads, agent) {
     + '  shift 2\n'
     + 'done\n'
     + 'if (( ${#parts[@]} )); then\n'
-    + '  curl -sS --fail --parallel --parallel-max 24 --max-time 60 --max-filesize "$max" --remove-on-error \\\n'
+    + '  curl -sS --fail --parallel --parallel-max 24 --max-time 20 --max-filesize "$max" --remove-on-error \\\n'
     + '    -A "$ua" "${args[@]}" 2>/dev/null\n'
     + '  for f in "${parts[@]}"; do\n'
     + '    if [[ -s "$dir/$f.part" ]]; then mv -f "$dir/$f.part" "$dir/$f"; else rm -f "$dir/$f.part"; fi\n'
@@ -1849,10 +1347,10 @@ function tileDownloadCommand(dir, downloads, agent) {
     + 'fi\n'
     + 'missing=0\n'
     + 'for f in "${files[@]}"; do [[ -s $dir/$f ]] || missing=$((missing + 1)); done\n'
-    + 'find "$dir" -name "r_*.png" -mmin +120 -delete 2>/dev/null\n'
+    + 'find "$dir" -name "f_*.png" -mmin +120 -delete 2>/dev/null\n'
     + 'echo "${#parts[@]} $missing"\n'
   var cmd = ["bash", "-c", script, "bash", dir, agent, String(MAX_TILE_BYTES)]
-  for (var i = 0; i < downloads.length; i++) cmd.push(downloads[i].url, downloads[i].file)
+  for (var i = 0; i < frames.length; i++) cmd.push(frames[i].url, radarFrameFile(frames[i]))
   return cmd
 }
 
@@ -1884,45 +1382,31 @@ function notification(view) {
 if (typeof module !== "undefined") {
   module.exports = {
     PLUGIN_ID: PLUGIN_ID,
-    YR_RADAR_OBS_INDEX: YR_RADAR_OBS_INDEX,
-    YR_RADAR_NOWCAST_INDEX: YR_RADAR_NOWCAST_INDEX,
-    YR_RADAR_ZOOM: YR_RADAR_ZOOM,
-    MAP_TILE_PX: MAP_TILE_PX,
-    MAP_ATTRIBUTION: MAP_ATTRIBUTION,
-    MAP_ZOOM_STEPS: MAP_ZOOM_STEPS,
-    MAP_DEFAULT_STEP: MAP_DEFAULT_STEP,
-    clampMapStep: clampMapStep,
+    radarIndexUrl: radarIndexUrl,
+    BR_RADAR_HISTORY: BR_RADAR_HISTORY,
+    BR_RADAR_FORECAST: BR_RADAR_FORECAST,
+    RADAR_ATTRIBUTION: RADAR_ATTRIBUTION,
     RADAR_COVERAGE: RADAR_COVERAGE,
-    coverageTiles: coverageTiles,
-    mapView: mapView,
-    radarView: radarView,
-    mapTilePath: mapTilePath,
-    mapLabels: mapLabels,
-    worldTile: worldTile,
-    viewTiles: viewTiles,
-    tileUrl: tileUrl,
-    radarTileFile: radarTileFile,
+    hasRainCoverage: hasRainCoverage,
+    radarMarkerPosition: radarMarkerPosition,
+    BR_RADAR_WIDTH: BR_RADAR_WIDTH,
+    BR_RADAR_HEIGHT: BR_RADAR_HEIGHT,
+    stableHash: stableHash,
     radarFrameId: radarFrameId,
+    radarFrameFile: radarFrameFile,
+    parseRadarIndex: parseRadarIndex,
     RADAR_MAX_AGE_MS: RADAR_MAX_AGE_MS,
     radarUsable: radarUsable,
     radarDelayNote: radarDelayNote,
     radarGapNote: radarGapNote,
-    parseTileIndex: parseTileIndex,
     radarFrames: radarFrames,
-    tileRunId: tileRunId,
     mapFrameLabel: mapFrameLabel,
-    radarDownloads: radarDownloads,
     radarFramesKey: radarFramesKey,
     rulerTicks: rulerTicks,
     radarImageSlots: radarImageSlots,
-    radarCoverageIndex: radarCoverageIndex,
     radarStep: radarStep,
     radarFrameAt: radarFrameAt,
-    mapViewKey: mapViewKey,
-    radarFrameFile: radarFrameFile,
-    frameComposeSpecs: frameComposeSpecs,
-    frameComposeCommand: frameComposeCommand,
-    tileDownloadCommand: tileDownloadCommand,
+    radarDownloadCommand: radarDownloadCommand,
     NOWCAST_BACKGROUND_MS: NOWCAST_BACKGROUND_MS,
     userAgent: userAgent,
     STRINGS: STRINGS,
@@ -1978,15 +1462,6 @@ if (typeof module !== "undefined") {
     toggleFavorite: toggleFavorite,
     favoriteRows: favoriteRows,
     stepFavorite: stepFavorite,
-    YR_LIGHTNING_URL: YR_LIGHTNING_URL,
-    LIGHTNING_FRAME_MS: LIGHTNING_FRAME_MS,
-    LIGHTNING_TRAIL_MS: LIGHTNING_TRAIL_MS,
-    parseLightning: parseLightning,
-    lightningMoment: lightningMoment,
-    lightningBolts: lightningBolts,
-    lightningPoints: lightningPoints,
-    lightningShape: lightningShape,
-    lightningSeed: lightningSeed,
     buildPressure: buildPressure,
     precipGlyph: precipGlyph,
     buildLongRange: buildLongRange,
@@ -1994,6 +1469,7 @@ if (typeof module !== "undefined") {
     buildView: buildView,
     notification: notification,
     summaryText: summaryText,
-    contentKey: contentKey
+    contentKey: contentKey,
+    parseRaintext: parseRaintext
   }
 }

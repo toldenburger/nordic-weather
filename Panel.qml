@@ -17,7 +17,7 @@ import "Model.js" as Model
 // rebuilds the rows whose content changed.
 Panel {
   id: root
-  moduleName: "io.github.nameproof.nordic-weather"
+  moduleName: "io.github.toldenburger.netherlands-weather"
   // Service.qml owns the omarchy.weather IPC target.
   manageIpc: false
 
@@ -99,15 +99,15 @@ Panel {
     radarOpen = !radarOpen
   }
 
-  // The map is laid out at the box's real pixel size (no scaling), so a
-  // smaller box shows a smaller area; the service computes the view for it.
-  readonly property int yrMapWidth: Math.max(1, Math.round(radarBox.width) - 2)
-  readonly property int yrMapHeight: Math.max(1, Math.round(radarBox.height) - 2)
+  // Reported to the service (informational only: Buienradar's radar image
+  // has a fixed render size, there is no per-panel view to compute).
+  readonly property int mapWidth: Math.max(1, Math.round(radarBox.width) - 2)
+  readonly property int mapHeight: Math.max(1, Math.round(radarBox.height) - 2)
   // A resize changes width and height one after the other: report once,
   // after both (a Timer rather than Qt.callLater, so no report can run
   // after this panel is gone).
-  onYrMapWidthChanged: sizeReport.restart()
-  onYrMapHeightChanged: sizeReport.restart()
+  onMapWidthChanged: sizeReport.restart()
+  onMapHeightChanged: sizeReport.restart()
   Timer {
     id: sizeReport
     interval: 0
@@ -119,7 +119,7 @@ Panel {
   function reportViewer() {
     if (!service) return
     service.updateViewer(viewerId, { open: opened, radarOpen: opened && radarOpen,
-                                     width: yrMapWidth, height: yrMapHeight })
+                                     width: mapWidth, height: mapHeight })
   }
 
   Component.onDestruction: if (service) service.removeViewer(viewerId)
@@ -151,43 +151,33 @@ Panel {
   readonly property string cacheDir: service ? service.cacheDir : ""
   readonly property string tilesDir: service ? service.tilesDir : ""
 
-  readonly property bool yrRadarActive: opened && radarOpen && !!service && service.yrRadarActive
+  readonly property bool radarActive: opened && radarOpen && !!service && service.radarActive
 
-  readonly property int mapStep: service ? service.mapStep : Model.MAP_DEFAULT_STEP
-  readonly property var mapViewState: yrRadarActive ? service.mapViewState : null
-  readonly property var yrBaseTiles: yrRadarActive ? service.yrBaseTiles : []
-  readonly property var yrDisplay: service ? service.yrDisplay : ({ frames: [], nowIndex: -1 })
-  readonly property var yrCurrentFrame: service ? service.yrCurrentFrame : null
-  readonly property int yrFrame: service ? service.yrFrame : 0
-  readonly property bool yrPaused: service ? service.yrPaused : false
-  readonly property bool yrPlaying: service ? service.yrPlaying : false
-  readonly property int yrPlayLimit: service ? service.yrPlayLimit : 0
+  readonly property var displayLoop: service ? service.displayLoop : ({ frames: [], nowIndex: -1 })
+  readonly property var currentFrame: service ? service.currentFrame : null
+  readonly property int radarFrame: service ? service.radarFrame : 0
+  readonly property bool radarPaused: service ? service.radarPaused : false
+  readonly property bool playing: service ? service.playing : false
+  readonly property int playLimit: service ? service.playLimit : 0
 
-  readonly property var yrImageLoop: service ? service.yrImageLoop : null
-  readonly property var yrPlayhead: service && service.yrShownValid ? service.yrPlayhead : ({ frame: 0, tick: 0 })
-  readonly property string yrPresentationToken: service ? service.yrPresentationToken : ""
+  readonly property var imageLoop: service ? service.imageLoop : null
+  readonly property var radarPlayhead: service && service.shownValid ? service.radarPlayhead : ({ frame: 0, tick: 0 })
+  readonly property string radarToken: service ? service.radarToken : ""
+
+  // Where the chosen place falls on Buienradar's fixed-size render, or null
+  // outside it (Buienradar has no per-location pan or zoom, unlike the old
+  // tile-based map).
+  readonly property var markerPosition: radarActive ? Model.radarMarkerPosition(location.latitude, location.longitude) : null
 
   function refresh(force) { if (service) service.refresh(force) }
-  function zoomMap(delta) { if (service) service.zoomMap(delta) }
   function togglePause() { if (service) service.togglePause() }
   function seekFrame(index) { if (service) service.seekFrame(index) }
   function stepFrame(delta) { if (service) service.stepFrame(delta) }
 
   // The time ruler's ticks (Model.rulerTicks), shared by the ruler on the map
   // and the stamps under it, which use the same inset.
-  readonly property var rulerTicks: yrRadarActive ? Model.rulerTicks(yrDisplay.frames, yrDisplay.nowIndex, lang) : []
+  readonly property var rulerTicks: radarActive ? Model.rulerTicks(displayLoop.frames, displayLoop.nowIndex, lang) : []
   readonly property int rulerPad: Style.space(16)
-
-  // Labels depend on this panel's font, so they are placed here.
-  FontMetrics {
-    id: mapLabelMetrics
-    font.family: root.fontFamily
-    font.pixelSize: Style.font.bodySmall
-  }
-  readonly property var mapLabels: yrRadarActive && mapViewState
-    ? Model.mapLabels(service.mapPlaces, mapViewState, yrMapWidth, yrMapHeight,
-                      lang, mapLabelMetrics.averageCharacterWidth, location.name)
-    : []
 
   // ---------------------------------------------------------------- location search
 
@@ -268,34 +258,19 @@ Panel {
   readonly property color faint: Qt.darker(fg, 1.9)
   readonly property string fontFamily: root.bar ? root.bar.fontFamily : Style.font.family
 
-  // Radar map palette, derived from the theme: land is the popup background
-  // so the map sits in the panel, lines move towards the text colour, and
-  // water gets a fixed blue tint so it reads as water in any theme.
+  // Radar map background: the popup background, so the map sits in the
+  // panel (Buienradar renders its own land, water and rain colours; there
+  // is no base-map or radar shader to theme here, unlike the old tile map).
   readonly property color mapLand: Qt.rgba(Color.popups.background.r, Color.popups.background.g, Color.popups.background.b, 1)
-  readonly property color mapWater: Qt.tint(mapLand, Qt.rgba(0.35, 0.55, 0.85, 0.22))
-  readonly property color mapRoad: Qt.tint(mapLand, Qt.rgba(fg.r, fg.g, fg.b, 0.30))
-  readonly property color mapBorder: Qt.tint(mapLand, Qt.rgba(fg.r, fg.g, fg.b, 0.45))
-
-  // Radar shader (shaders/radar.frag): rain opacity, and the look of areas
-  // without radar coverage: faint diagonal lines over a slight darkening.
-  readonly property real radarStrength: 0.85
-  readonly property real radarDimStrength: 0.18
-  readonly property real radarLineStrength: 0.35
-  readonly property real radarLineSpacing: 8
-  readonly property real radarLineWidth: 0.6
-  readonly property color radarLineColor: Qt.darker(fg, 2.0)
-  // How dark the map is: 0 for light themes (luma ≥ 0.45), 1 for dark ones
-  // (≤ 0.15). The radar shader recolours rain for dark maps this much.
-  readonly property real mapDarkness: Math.max(0, Math.min(1,
-    (0.45 - (0.299 * mapLand.r + 0.587 * mapLand.g + 0.114 * mapLand.b)) / 0.3))
 
   // Forecast column width; the radar side panel is added next to it.
   readonly property int forecastWidth: Style.space(540)
   readonly property int radarGap: Style.space(16)
-  // The radar map's size (Nordic proportions), smaller when the panel
+  // The radar map's size (Buienradar's render proportions), smaller when the panel
   // doesn't fit it.
-  readonly property int radarMapWidth: 659
-  readonly property int radarMapHeight: 761
+  // Buienradar's fixed render size (Model.BR_RADAR_WIDTH/HEIGHT).
+  readonly property int radarMapWidth: 700
+  readonly property int radarMapHeight: 606
 
   // Column widths for the hourly table, shared by every row.
   readonly property int colHour: Style.space(26)
@@ -345,12 +320,10 @@ Panel {
       }
       onTextKey: function(key) {
         if (key === "r") root.refresh(true)
-        else if ((key === "+" || key === "=") && root.yrRadarActive) root.zoomMap(1)
-        else if (key === "-" && root.yrRadarActive) root.zoomMap(-1)
         // Video-player keys: step a frame (pauses), play/pause.
-        else if (key === "," && root.yrRadarActive) root.stepFrame(-1)
-        else if (key === "." && root.yrRadarActive) root.stepFrame(1)
-        else if (key === "p" && root.yrRadarActive) root.togglePause()
+        else if (key === "," && root.radarActive) root.stepFrame(-1)
+        else if (key === "." && root.radarActive) root.stepFrame(1)
+        else if (key === "p" && root.radarActive) root.togglePause()
       }
 
       Flickable {
@@ -843,7 +816,7 @@ Panel {
                   required property var modelData
                   anchors.bottom: parent.bottom
                   width: Style.space(4)
-                  // Scaled to yr.no's "heavy" level (2.7 mm/h).
+                  // Scaled to Buienradar's "heavy" level (2.7 mm/h).
                   height: Math.max(1, Math.min(1, modelData.rate / 2.7) * sparkline.height)
                   color: root.fg
                   opacity: modelData.rate > 0 ? 0.8 : 0.25
@@ -1192,7 +1165,7 @@ Panel {
         }
       }
 
-      // ---- Radar side panel: yr.no's radar on our own map of the Nordics,
+      // ---- Radar side panel: Buienradar's radar over the Netherlands,
       //      only created while shown.
       Column {
         id: radarPane
@@ -1210,18 +1183,17 @@ Panel {
           width: Math.round(root.radarMapWidth * radarPane.mapScale) + 2
           height: Math.round(root.radarMapHeight * radarPane.mapScale) + 2
           radius: Style.cornerRadius
-          color: "transparent"
+          color: root.mapLand
           border.width: 1
           border.color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.2)
           clip: true
 
-          // Base map and radar frames, each recoloured by a shader.
           Loader {
-            id: yrMapLoader
+            id: radarMapLoader
             anchors.fill: parent
             anchors.margins: 1
-            active: root.yrRadarActive
-            sourceComponent: yrMapComponent
+            active: root.radarActive
+            sourceComponent: radarMapComponent
           }
 
           // The map needs a place to centre on.
@@ -1244,7 +1216,7 @@ Panel {
           id: stampRow
           width: radarBox.width
           height: radarStatus.implicitHeight
-          visible: root.yrRadarActive
+          visible: root.radarActive
 
           readonly property int count: root.rulerTicks.length
           // The map inside radarBox's 1 px border, as the ruler measures it.
@@ -1275,15 +1247,15 @@ Panel {
             anchors.rightMargin: Style.space(4)
             spacing: Style.space(6)
 
-            // Frames missing from yr.no's loop (an outage): a warning, with
+            // Frames missing from the loop (an outage): a warning, with
             // the explanation on hover, so the jumps in time aren't taken
             // for a bug.
             Text {
               id: gapWarning
-              readonly property string note: root.yrRadarActive ? Model.radarGapNote(root.yrDisplay.frames, root.lang) : ""
+              readonly property string note: root.radarActive ? Model.radarGapNote(root.displayLoop.frames, root.lang) : ""
               visible: note !== ""
               textFormat: Text.PlainText
-              text: "\uf071"  // nf-fa-warning
+              text: ""  // nf-fa-warning
               color: gapHover.hovered ? root.fg : root.dim
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
@@ -1301,13 +1273,13 @@ Panel {
             Text {
               id: radarStatus
               textFormat: Text.PlainText
-              // While a zoom level's first frames are still downloading (a
-              // first visit fetches several hundred tiles), or paused; while
-              // playing, when yr.no's radar runs late ("Radar från 13:15").
-              text: !root.yrPlaying ? root.t.radarLoading : root.yrPaused ? "\uf04c"  // nf-fa-pause
-                : Model.radarDelayNote(root.service ? root.service.yrNowMs : 0, root.service ? root.service.yrClockMs : 0, root.lang)
+              // While the first frames are still downloading, or paused;
+              // while playing, when Buienradar's newest observation runs
+              // late ("Radar van 13:15").
+              text: !root.playing ? root.t.radarLoading : root.radarPaused ? ""  // nf-fa-pause
+                : Model.radarDelayNote(root.service ? root.service.radarNowMs : 0, root.service ? root.service.radarClockMs : 0, root.lang)
               // The pause sign in the brightest text colour, so it's noticed.
-              color: root.yrPlaying && root.yrPaused ? root.fg : root.faint
+              color: root.playing && root.radarPaused ? root.fg : root.faint
               font.family: root.fontFamily
               font.pixelSize: Style.font.caption
             }
@@ -1315,8 +1287,8 @@ Panel {
         }
       }
 
-      // The one place for credits: the forecast (MET Norway), the base map
-      // and the radar. Bottom right, level with the footer's sun and moon.
+      // The one place for credits: the forecast (MET Norway) and the radar
+      // (Buienradar). Bottom right, level with the footer's sun and moon.
       Text {
         id: credits
         visible: root.radarOpen
@@ -1325,221 +1297,43 @@ Panel {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Math.round((sunRow.implicitHeight - implicitHeight) / 2)
         textFormat: Text.PlainText
-        text: root.view.attribution + Model.MAP_ATTRIBUTION
+        text: root.view.attribution + Model.RADAR_ATTRIBUTION
         color: root.faint
         font.family: root.fontFamily
         font.pixelSize: Style.font.caption
       }
 
       Component {
-        id: yrMapComponent
+        id: radarMapComponent
 
         Item {
-          id: yrMap
+          id: radarMap
           clip: true
 
-          Rectangle {
-            anchors.fill: parent
-            color: root.mapLand
-          }
-
-          // Base map: mask tiles shipped in map/tiles, coloured by the theme.
-          Item {
-            anchors.fill: parent
-            layer.enabled: true
-            layer.effect: ShaderEffect {
-              property color landColor: root.mapLand
-              property color waterColor: root.mapWater
-              property color roadColor: root.mapRoad
-              property color borderColor: root.mapBorder
-              fragmentShader: Qt.resolvedUrl("shaders/mapdata.frag.qsb")
-            }
-
-            Repeater {
-              model: ScriptModel { values: root.yrBaseTiles; objectProp: "key" }
-
-              Image {
-                required property var modelData
-                x: modelData.left
-                y: modelData.top
-                width: modelData.size
-                height: modelData.size
-                asynchronous: true
-                // Decoded at the drawn size, so tiles shown smaller (zoom 5.5,
-                // overview) stay sharp without mipmaps.
-                sourceSize.width: Math.min(modelData.size, Model.MAP_TILE_PX)
-                sourceSize.height: Math.min(modelData.size, Model.MAP_TILE_PX)
-                source: Qt.resolvedUrl(Model.mapTilePath(modelData))
-              }
-            }
-          }
-
-          // The radar shader samples the frame images directly (no offscreen
-          // pass). The old loop stays on screen while a replacement decodes.
+          // Buienradar's own rendered frame: its basemap and rain are
+          // already baked in, so this is the whole picture (no base tiles,
+          // shader recolouring or lightning layer to add on top, unlike
+          // the original Nordic build's yr.no tiles).
           RadarImages {
             id: radarImages
-            loop: root.yrImageLoop
-            playhead: root.yrPlayhead
+            anchors.fill: parent
+            loop: root.imageLoop
+            playhead: root.radarPlayhead
             directory: root.tilesDir
-            token: root.yrPresentationToken
+            token: root.radarToken
             onPrepared: function(token, ready) {
               if (root.service) root.service.radarImagesPrepared(token, ready)
             }
             onFailed: if (root.service) root.service.radarImagesFailed()
           }
-          // Stands in for a missing image (e.g. right after a zoom): a
-          // ShaderEffect warns about any texture property that is null.
-          Image {
-            id: noRadarImage
-            visible: false
-          }
-          ShaderEffect {
-            anchors.fill: parent
-            visible: radarImages.current !== null
-            property var source: radarImages.current || noRadarImage
-            property var coverageMap: radarImages.coverage || noRadarImage
-            property real strength: root.radarStrength
-            property real dimStrength: root.radarDimStrength
-            property real lineStrength: root.radarLineStrength
-            property real lineSpacing: root.radarLineSpacing
-            property real lineWidth: root.radarLineWidth
-            property color lineColor: root.radarLineColor
-            property real darkMap: root.mapDarkness
-            fragmentShader: Qt.resolvedUrl("shaders/radar.frag.qsb")
-          }
 
-          // Lightning (yr.no): strikes from the shown moment's own 5 minutes
-          // get a bolt that flares as it appears, those from the 5 minutes
-          // before a dimmer one (Model.lightningBolts). Under them, each
-          // strike leaves a small dot that fades over
-          // Model.LIGHTNING_TRAIL_MS. Dots and dim bolts are drawn once per
-          // frame; only the few new bolts are redrawn while they flare.
+          // The chosen place, when it falls inside Buienradar's coverage.
           Item {
-            id: lightning
-            anchors.fill: parent
-            readonly property var points: root.yrRadarActive && root.mapViewState && root.service
-              ? Model.lightningPoints(root.service.lightningStrikes, root.mapViewState, width, height, 30) : []
-            readonly property double frameMs: root.yrCurrentFrame ? root.yrCurrentFrame.timeMs : 0
-            // The time strikes are shown for; null on forecast frames.
-            readonly property var moment: root.service && frameMs && points.length
-              ? Model.lightningMoment(frameMs, root.service.yrNowMs, root.service.lightningDataMs) : null
-            readonly property var bolts: moment !== null ? Model.lightningBolts(points, moment) : ({ fresh: [], after: [] })
-            readonly property color glow: "#ffdf8f"
-            readonly property color core: "#fffdf7"
-            readonly property color edge: "#0b0d14"
-            // 0 → 1 while new bolts flare; 1 at rest.
-            property real flash: 1
-            onBoltsChanged: {
-              if (bolts.fresh.length) flashAnim.restart()
-              else { flashAnim.stop(); flash = 1 }
-              trail.requestPaint()
-              flashes.requestPaint()
-            }
-            onFlashChanged: flashes.requestPaint()
-            NumberAnimation { id: flashAnim; target: lightning; property: "flash"; from: 0; to: 1; duration: 220 }
-
-            function traceLine(ctx, p, pts) {
-              ctx.moveTo(p.x + pts[0][0], p.y + pts[0][1])
-              for (var i = 1; i < pts.length; i++) ctx.lineTo(p.x + pts[i][0], p.y + pts[i][1])
-            }
-            function strokeBolt(ctx, p, color, width, alpha) {
-              ctx.globalAlpha = alpha
-              ctx.strokeStyle = String(color)
-              ctx.lineWidth = width
-              ctx.beginPath()
-              traceLine(ctx, p, p.shape.main)
-              for (var b = 0; b < p.shape.branches.length; b++) traceLine(ctx, p, p.shape.branches[b])
-              ctx.stroke()
-            }
-            // A dark edge first, so the bolt stands out on blue rain.
-            function drawBolt(ctx, p, alpha, flare) {
-              strokeBolt(ctx, p, edge, 4, alpha * 0.55)
-              strokeBolt(ctx, p, glow, 2.6 + 3 * flare, alpha * (0.45 + 0.4 * flare))
-              strokeBolt(ctx, p, core, 1.2, alpha)
-            }
-
-            Canvas {
-              id: trail
-              anchors.fill: parent
-              onPaint: {
-                var ctx = getContext("2d")
-                ctx.reset()
-                var moment = lightning.moment
-                if (moment === null) return
-                ctx.lineJoin = "round"
-                ctx.lineCap = "round"
-                ctx.fillStyle = String(lightning.glow)
-                var points = lightning.points
-                for (var i = 0; i < points.length; i++) {
-                  var age = moment - points[i].ms
-                  if (age < 0 || age >= Model.LIGHTNING_TRAIL_MS) continue
-                  ctx.globalAlpha = 0.6 * (1 - age / Model.LIGHTNING_TRAIL_MS)
-                  ctx.beginPath()
-                  ctx.arc(points[i].x, points[i].y, 1.6, 0, 2 * Math.PI)
-                  ctx.fill()
-                }
-                var after = lightning.bolts.after
-                for (var j = 0; j < after.length; j++) lightning.drawBolt(ctx, after[j], 0.35, 0)
-                ctx.globalAlpha = 1
-              }
-            }
-            Canvas {
-              id: flashes
-              anchors.fill: parent
-              onPaint: {
-                var ctx = getContext("2d")
-                ctx.reset()
-                var fresh = lightning.bolts.fresh
-                if (!fresh.length) return
-                ctx.lineJoin = "round"
-                ctx.lineCap = "round"
-                for (var i = 0; i < fresh.length; i++) lightning.drawBolt(ctx, fresh[i], 1, 1 - lightning.flash)
-                ctx.globalAlpha = 1
-              }
-            }
-          }
-
-          // Nearby cities and towns (map/places.json), picked per zoom level.
-          Repeater {
-            model: ScriptModel { values: root.mapLabels; objectProp: "key" }
-
-            Item {
-              id: placeLabel
-              required property var modelData
-              x: modelData.x
-              y: modelData.y
-
-              Rectangle {
-                x: -width / 2
-                y: -height / 2
-                width: placeLabel.modelData.capital ? 5 : 4
-                height: width
-                radius: width / 2
-                color: root.dim
-              }
-              Text {
-                x: 6
-                y: -height / 2
-                textFormat: Text.PlainText
-                text: placeLabel.modelData.text
-                color: root.dim
-                style: Text.Outline
-                styleColor: root.mapLand
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.bodySmall
-                font.bold: placeLabel.modelData.capital
-              }
-            }
-          }
-
-          // The chosen place: centred when possible, but views stay inside
-          // the radar coverage, so near its edge the marker moves off-centre.
-          Item {
-            readonly property real mx: root.mapViewState ? root.mapViewState.markerX : -100
-            readonly property real my: root.mapViewState ? root.mapViewState.markerY : -100
-            visible: mx >= 0 && mx <= yrMap.width && my >= 0 && my <= yrMap.height
-            x: Math.round(mx)
-            y: Math.round(my)
+            id: marker
+            readonly property var pos: root.markerPosition
+            visible: pos !== null
+            x: pos ? Math.round(pos.x / Model.BR_RADAR_WIDTH * radarMap.width) : 0
+            y: pos ? Math.round(pos.y / Model.BR_RADAR_HEIGHT * radarMap.height) : 0
 
             Rectangle {
               x: -width / 2
@@ -1576,9 +1370,6 @@ Panel {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: root.togglePause()
-            onWheel: function(wheel) {
-              if (wheel.angleDelta.y !== 0) root.zoomMap(wheel.angleDelta.y > 0 ? 1 : -1)
-            }
           }
 
           // Time ruler: one tick per frame, tallest at "now" and shorter
@@ -1599,7 +1390,7 @@ Panel {
             readonly property int count: ticks.length
             readonly property int pad: root.rulerPad
             readonly property real step: count > 1 ? (width - 2 * pad) / (count - 1) : 0
-            readonly property int current: Math.min(root.yrFrame, count - 1)
+            readonly property int current: Math.min(root.radarFrame, count - 1)
             readonly property int tickMin: Style.space(2)
             readonly property int tickMax: Style.space(20)
             readonly property bool active: rulerArea.containsMouse || rulerArea.pressed
@@ -1645,14 +1436,14 @@ Panel {
                 // a bit stronger.
                 opacity: isCurrent ? 1
                   : modelData.level === 1 ? 0.8
-                  : index >= root.yrPlayLimit ? 0.12
+                  : index >= root.playLimit ? 0.12
                   : (index < ruler.current ? 0.55 : 0.3) + (modelData.stamp !== "" ? 0.15 : 0)
               }
             }
 
             // The time under the pointer while hovering or scrubbing.
             Text {
-              readonly property var frame: root.yrDisplay.frames[ruler.hoverIndex] || null
+              readonly property var frame: root.displayLoop.frames[ruler.hoverIndex] || null
               visible: ruler.active && frame !== null
               x: Math.max(Style.space(4), Math.min(parent.width - width - Style.space(4),
                 Math.round(ruler.pad + ruler.hoverIndex * ruler.step - width / 2)))
@@ -1674,53 +1465,6 @@ Panel {
               cursorShape: Qt.PointingHandCursor
               onPressed: function(mouse) { root.seekFrame(ruler.indexAt(mouse.x)) }
               onPositionChanged: function(mouse) { if (pressed) root.seekFrame(ruler.indexAt(mouse.x)) }
-              // Zooming with the wheel works over the ruler too.
-              onWheel: function(wheel) {
-                if (wheel.angleDelta.y !== 0) root.zoomMap(wheel.angleDelta.y > 0 ? 1 : -1)
-              }
-            }
-          }
-
-          // Zoom buttons.
-          Column {
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: Style.space(8)
-            spacing: Style.space(4)
-
-            Repeater {
-              model: [{ label: "+", delta: 1 }, { label: "−", delta: -1 }]
-
-              Rectangle {
-                id: zoomButton
-                required property var modelData
-                readonly property bool enabledStep: modelData.delta > 0
-                  ? root.mapStep < Model.MAP_ZOOM_STEPS.length - 1
-                  : root.mapStep > 0
-                width: Style.space(24)
-                height: width
-                radius: Style.cornerRadius
-                color: zoomArea.containsMouse && enabledStep ? Style.hoverFillFor(root.fg, Color.accent) : root.mapLand
-                border.width: 1
-                border.color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.25)
-                opacity: enabledStep ? 1 : 0.4
-
-                Text {
-                  anchors.centerIn: parent
-                  textFormat: Text.PlainText
-                  text: zoomButton.modelData.label
-                  color: root.fg
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.title
-                }
-                MouseArea {
-                  id: zoomArea
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: zoomButton.enabledStep ? Qt.PointingHandCursor : Qt.ArrowCursor
-                  onClicked: root.zoomMap(zoomButton.modelData.delta)
-                }
-              }
             }
           }
         }
