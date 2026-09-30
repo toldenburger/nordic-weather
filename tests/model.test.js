@@ -21,19 +21,14 @@ test("runs in the expected zone", () => {
 })
 
 test("language follows locale, English fallback", () => {
-  assert.equal(M.langFor("sv_SE"), "sv")
-  assert.equal(M.langFor("sv_FI.UTF-8"), "sv")
-  assert.equal(M.langFor("SV"), "sv")
-  assert.equal(M.langFor("nb_NO"), "nb")
-  assert.equal(M.langFor("nn_NO.UTF-8"), "nb")
-  assert.equal(M.langFor("no"), "nb")
-  assert.equal(M.langFor("da_DK.UTF-8"), "da")
-  assert.equal(M.langFor("fi_FI"), "fi")
-  assert.equal(M.langFor("fil_PH"), "en")
+  assert.equal(M.langFor("nl_NL"), "nl")
+  assert.equal(M.langFor("nl_BE.UTF-8"), "nl")
+  assert.equal(M.langFor("NL"), "nl")
   assert.equal(M.langFor("en_US"), "en")
   assert.equal(M.langFor("de_DE"), "en")
-  assert.equal(M.langFor("svx"), "en")
-  assert.equal(M.langFor("nds_DE"), "en")
+  assert.equal(M.langFor("sv_SE"), "en")
+  assert.equal(M.langFor("nlx"), "en")
+  assert.equal(M.langFor("nds_NL"), "en")
   assert.equal(M.langFor(""), "en")
 })
 
@@ -59,51 +54,26 @@ test("languages: every entry is complete", () => {
   }
 })
 
-test("Norwegian: descriptions, dates, numbers and hours", () => {
-  assert.equal(M.describeSymbol("clearsky_day", "nb"), "Klarvær")
-  assert.equal(M.describeSymbol("lightrain", "nb"), "Lett regn")
-  assert.equal(M.describeSymbol("heavyrainshowersandthunder_day", "nb"), "Kraftige regnbyger og torden")
-  assert.equal(M.describeSymbol("sleetshowers_night", "nb"), "Sluddbyger")
-  assert.equal(M.describeSymbol("lightssnowshowersandthunder_night", "nb"), "Lette snøbyger og torden")
+test("Dutch: descriptions, dates, numbers and hours", () => {
+  assert.equal(M.describeSymbol("clearsky_day", "nl"), "Helder")
+  assert.equal(M.describeSymbol("lightrain", "nl"), "Lichte regen")
+  assert.equal(M.describeSymbol("heavyrainshowersandthunder_day", "nl"), "Zware regenbuien en onweer")
+  assert.equal(M.describeSymbol("sleetshowers_night", "nl"), "Buien met natte sneeuw")
+  assert.equal(M.describeSymbol("lightssnowshowersandthunder_night", "nl"), "Lichte sneeuwbuien en onweer")
   const today = Date.parse("2026-09-26T00:00:00+02:00")
-  assert.equal(M.dayTitle(Date.parse("2026-09-28T00:00:00+02:00"), today, "nb"), "Mandag 28. sep")
-  assert.equal(M.dayTitle(today, today, "nb"), "I dag 26. sep")
-  assert.equal(M.formatNumber(0.4, 1, "nb"), "0,4")
-  assert.equal(M.formatPrecip(0.2, 0, 1.4, "nb"), "0–1,4 mm")
-  assert.ok(M.geocodeUrl("Bergen", "nb").endsWith("&language=no"))
+  assert.equal(M.dayTitle(Date.parse("2026-09-28T00:00:00+02:00"), today, "nl"), "Maandag 28 sep")
+  assert.equal(M.dayTitle(today, today, "nl"), "Vandaag 26 sep")
+  assert.equal(M.formatNumber(0.4, 1, "nl"), "0,4")
+  assert.equal(M.formatPrecip(0.2, 0, 1.4, "nl"), "0–1,4 mm")
+  assert.ok(M.geocodeUrl("Amsterdam", "nl").endsWith("&language=nl"))
   const frames = [0, 1, 2].map((h) => ({ timeMs: h * 3600000 }))
-  assert.deepEqual(M.rulerTicks(frames, 1, "nb").map((t) => t.stamp), ["\u22121 t", "Nå", "+1 t"])
+  assert.deepEqual(M.rulerTicks(frames, 1, "nl").map((t) => t.stamp), ["−1 u", "Nu", "+1 u"])
 })
 
-test("Danish: descriptions, dates and hours", () => {
-  assert.equal(M.describeSymbol("fair_day", "da"), "Let skyet")
-  assert.equal(M.describeSymbol("lightrainshowers_day", "da"), "Lette regnbyger")
-  assert.equal(M.describeSymbol("heavysleetandthunder", "da"), "Kraftig slud og torden")
-  assert.equal(M.describeSymbol("snowshowers_night", "da"), "Snebyger")
-  const today = Date.parse("2026-09-26T00:00:00+02:00")
-  assert.equal(M.dayTitle(Date.parse("2026-09-28T00:00:00+02:00"), today, "da"), "Mandag 28. sep")
-  assert.equal(M.formatNumber(0.4, 1, "da"), "0,4")
-  const frames = [0, 1, 2].map((h) => ({ timeMs: h * 3600000 }))
-  assert.deepEqual(M.rulerTicks(frames, 1, "da").map((t) => t.stamp), ["\u22121 t", "Nu", "+1 t"])
-})
-
-test("Finnish: partitive descriptions, numeric dates", () => {
-  assert.equal(M.describeSymbol("clearsky_day", "fi"), "Selkeää")
-  assert.equal(M.describeSymbol("lightrain", "fi"), "Heikkoa vesisadetta")
-  assert.equal(M.describeSymbol("rainshowers_day", "fi"), "Sadekuuroja")
-  assert.equal(M.describeSymbol("heavysnowshowersandthunder_day", "fi"), "Voimakkaita lumikuuroja ja ukkosta")
-  assert.equal(M.describeSymbol("lightssleetshowersandthunder_night", "fi"), "Heikkoja räntäkuuroja ja ukkosta")
-  const today = Date.parse("2026-09-26T00:00:00+02:00")
-  assert.equal(M.dayTitle(Date.parse("2026-09-28T00:00:00+02:00"), today, "fi"), "Maanantai 28.9.")
-  assert.equal(M.dayTitle(today, today, "fi"), "Tänään 26.9.")
-  assert.equal(M.formatNumber(0.4, 1, "fi"), "0,4")
-  assert.ok(M.geocodeUrl("Oulu", "fi").endsWith("&language=fi"))
-})
-
-test("numbers use a decimal comma in Swedish", () => {
-  assert.equal(M.formatNumber(0.4, 1, "sv"), "0,4")
+test("numbers use a decimal comma in Dutch", () => {
+  assert.equal(M.formatNumber(0.4, 1, "nl"), "0,4")
   assert.equal(M.formatNumber(0.4, 1, "en"), "0.4")
-  assert.equal(M.formatNumber(1.0, 1, "sv"), "1")
+  assert.equal(M.formatNumber(1.0, 1, "nl"), "1")
   assert.equal(M.roundTemp(-0.3), 0)
   assert.ok(!Object.is(M.roundTemp(-0.3), -0))
 })
@@ -140,10 +110,10 @@ test("curl command identifies itself and sends If-Modified-Since", () => {
 test("every request caps the response size", () => {
   const cap = (cmd) => cmd[cmd.indexOf("--max-filesize") + 1]
   assert.equal(cap(M.curlCommand("https://x", "", 10, "agent/1")), String(M.MAX_RESPONSE_BYTES))
-  const geocode = M.geocodeCommand("Bergen", "nb", "agent/1")
+  const geocode = M.geocodeCommand("Amsterdam", "nl", "agent/1")
   assert.equal(cap(geocode), String(M.MAX_RESPONSE_BYTES))
   assert.equal(geocode[geocode.indexOf("-A") + 1], "agent/1")
-  assert.equal(geocode.at(-1), M.geocodeUrl("Bergen", "nb"))
+  assert.equal(geocode.at(-1), M.geocodeUrl("Amsterdam", "nl"))
 })
 
 test("an oversized compressed response is cut off at the cap", { skip: !fs.existsSync("/usr/bin/curl") && "curl not installed" }, async () => {
@@ -194,18 +164,18 @@ test("HTTP response parsing and cache policy", () => {
 })
 
 test("symbol descriptions in both languages", () => {
-  assert.equal(M.describeSymbol("clearsky_day", "sv"), "Klart")
+  assert.equal(M.describeSymbol("clearsky_day", "nl"), "Helder")
   assert.equal(M.describeSymbol("partlycloudy_night", "en"), "Partly cloudy")
-  assert.equal(M.describeSymbol("lightrain", "sv"), "Lätt regn")
-  assert.equal(M.describeSymbol("heavyrainshowers_day", "sv"), "Kraftiga regnskurar")
-  assert.equal(M.describeSymbol("sleetshowersandthunder_night", "sv"), "Byar av snöblandat regn och åska")
+  assert.equal(M.describeSymbol("lightrain", "nl"), "Lichte regen")
+  assert.equal(M.describeSymbol("heavyrainshowers_day", "nl"), "Zware regenbuien")
+  assert.equal(M.describeSymbol("sleetshowersandthunder_night", "nl"), "Buien met natte sneeuw en onweer")
   assert.equal(M.describeSymbol("heavysnow", "en"), "Heavy snow")
   assert.equal(M.describeSymbol("rainshowersandthunder_day", "en"), "Rain showers and thunder")
 })
 
 test("MET's misspelled symbol codes map to the real ones", () => {
   assert.equal(M.describeSymbol("lightssleetshowersandthunder_day", "en"), "Light sleet showers and thunder")
-  assert.equal(M.describeSymbol("lightssnowshowersandthunder_night", "sv"), "Lätta snöbyar och åska")
+  assert.equal(M.describeSymbol("lightssnowshowersandthunder_night", "nl"), "Lichte sneeuwbuien en onweer")
   assert.equal(M.iconForSymbol("lightssnowshowersandthunder_night"), M.iconForSymbol("lightsnowshowersandthunder_night"))
 })
 
@@ -219,7 +189,7 @@ test("every MET base symbol has a description and a specific icon", () => {
   for (const b of bases) {
     for (const v of ["", "_day", "_night"]) {
       const code = b + v
-      for (const lang of ["sv", "en"]) {
+      for (const lang of ["nl", "en"]) {
         const text = M.describeSymbol(code, lang)
         assert.ok(text.length > 0 && text[0] === text[0].toUpperCase(), code + " " + lang)
         assert.ok(!/^[a-z]+$/.test(text), "untranslated: " + code)
@@ -248,7 +218,7 @@ test("moon phase glyphs (footer only)", () => {
 
 test("moon illumination", () => {
   const at = (deg) => M.buildView({ moon: { phaseDeg: deg, refMs: NOW, highMs: NaN },
-                                    lang: "sv", nowMs: NOW }).moon.illumination
+                                    lang: "nl", nowMs: NOW }).moon.illumination
   assert.equal(at(0), 0)
   assert.equal(at(90), 50)
   assert.equal(at(180), 100)
@@ -263,18 +233,18 @@ test("moon phase advances between days", () => {
 })
 
 test("wind compass and arrow", () => {
-  assert.equal(M.windCompass(259, "sv"), "V")
+  assert.equal(M.windCompass(259, "nl"), "W")
   assert.equal(M.windCompass(259, "en"), "W")
-  assert.equal(M.windCompass(45, "sv"), "NO")
+  assert.equal(M.windCompass(45, "nl"), "NO")
   assert.equal(M.windArrow(259), "→")  // from the west, blowing east
   assert.equal(M.windArrow(0), "↓")
 })
 
 test("precipitation formatting", () => {
-  assert.equal(M.formatPrecip(0, 0, 0, "sv"), "")
-  assert.equal(M.formatPrecip(0.04, 0.04, 0.04, "sv"), "<0,1 mm")
-  assert.equal(M.formatPrecip(0.4, 0.4, 0.4, "sv"), "0,4 mm")
-  assert.equal(M.formatPrecip(0.6, 0.2, 1.4, "sv"), "0,2–1,4 mm")
+  assert.equal(M.formatPrecip(0, 0, 0, "nl"), "")
+  assert.equal(M.formatPrecip(0.04, 0.04, 0.04, "nl"), "<0,1 mm")
+  assert.equal(M.formatPrecip(0.4, 0.4, 0.4, "nl"), "0,4 mm")
+  assert.equal(M.formatPrecip(0.6, 0.2, 1.4, "nl"), "0,2–1,4 mm")
   assert.equal(M.formatPrecip(0, 0, 0.3, "en"), "0–0.3 mm")
 })
 
@@ -287,11 +257,11 @@ test("forecast parsing keeps periods", () => {
 })
 
 test("current conditions use the step nearest now", () => {
-  const c = M.buildCurrent(alingsas, null, NOW, "sv")
+  const c = M.buildCurrent(alingsas, null, NOW, "nl")
   const nearest = alingsas.steps.find((s) => s.ms === Date.parse("2026-09-26T13:00:00Z"))
   assert.equal(c.temp, Math.round(nearest.instant.air_temperature))
-  assert.equal(c.description, M.describeSymbol(nearest.period1.symbol, "sv"))
-  assert.equal(c.wind.dirLabel, M.windCompass(nearest.instant.wind_from_direction, "sv"))
+  assert.equal(c.description, M.describeSymbol(nearest.period1.symbol, "nl"))
+  assert.equal(c.wind.dirLabel, M.windCompass(nearest.instant.wind_from_direction, "nl"))
 })
 
 test("current conditions prefer a fresh nowcast", () => {
@@ -320,8 +290,8 @@ test("pressure: now and its forecast change over 3 hours", () => {
   assert.equal(M.pressureAt(fc.steps, 1.5 * 3600000), 1011.5)
   assert.equal(M.pressureAt(fc.steps, 5 * 3600000), null)
   // 1010.5 → 1013.2: rising, not yet steep.
-  assert.deepEqual(M.buildPressure(fc, 0.5 * 3600000, "sv"),
-    { value: 1011, change: 2.7, arrow: "\u2197", changeText: "+2,7 på 3 h" })
+  assert.deepEqual(M.buildPressure(fc, 0.5 * 3600000, "nl"),
+    { value: 1011, change: 2.7, arrow: "\u2197", changeText: "+2,7 over 3 u" })
   // Past the forecast's end there's no change to show.
   assert.deepEqual(M.buildPressure(fc, 3 * 3600000, "en"), { value: 1013, change: null, arrow: "", changeText: "" })
   const falling = { steps: [step(0, 1020), step(3, 1016.5)] }
@@ -329,27 +299,27 @@ test("pressure: now and its forecast change over 3 hours", () => {
   assert.equal(M.buildPressure(falling, 0, "en").changeText, "\u22123.5 in 3 h")
   const flat = { steps: [step(0, 1020), step(3, 1020.4)] }
   assert.equal(M.buildPressure(flat, 0, "en").arrow, "\u2192")
-  assert.equal(M.buildPressure({ steps: [step(0, 1020), step(3, 1020)] }, 0, "sv").changeText, "\u00b10 på 3 h")
+  assert.equal(M.buildPressure({ steps: [step(0, 1020), step(3, 1020)] }, 0, "nl").changeText, "\u00b10 over 3 u")
   // From the fixture: a plausible sea-level pressure.
-  const p = M.buildCurrent(alingsas, null, NOW, "sv").pressure
+  const p = M.buildCurrent(alingsas, null, NOW, "nl").pressure
   assert.ok(p.value > 950 && p.value < 1060 && p.changeText !== "")
 })
 
 test("hourly days: 3 h steps, then 6 h steps past the hourly range", () => {
-  const days = M.buildHourlyDays(alingsas, NOW, 3, 3, "sv")
-  assert.deepEqual(days.map((d) => d.title), ["Idag 26 sep", "Imorgon 27 sep", "Måndag 28 sep"])
+  const days = M.buildHourlyDays(alingsas, NOW, 3, 3, "nl")
+  assert.deepEqual(days.map((d) => d.title), ["Vandaag 26 sep", "Morgen 27 sep", "Maandag 28 sep"])
   assert.deepEqual(days[0].rows.map((r) => r.hour), ["15", "18", "21"])
   assert.deepEqual(days[1].rows.map((r) => r.hour), ["00", "03", "06", "09", "12", "15", "18", "21"])
   for (const day of days) for (const r of day.rows) assert.ok(r.ms >= Date.parse("2026-09-26T12:00:00Z"))
   // Upcoming times only: the 15 row shows until 15:00 local, then goes.
-  const today = (iso) => M.buildHourlyDays(alingsas, Date.parse(iso), 3, 3, "sv")[0].rows.map((r) => r.hour)
+  const today = (iso) => M.buildHourlyDays(alingsas, Date.parse(iso), 3, 3, "nl")[0].rows.map((r) => r.hour)
   assert.deepEqual(today("2026-09-26T12:57:00Z"), ["15", "18", "21"])
   assert.deepEqual(today("2026-09-26T13:00:00Z"), ["18", "21"])
   assert.deepEqual(today("2026-09-26T13:57:00Z"), ["18", "21"])
   // The day after tomorrow is always 6-hour rows, even when a later
   // forecast run covers it hourly (simulated: every step gets a 1 h period).
   const allHourly = { steps: alingsas.steps.map((st) => Object.assign({}, st, { period1: st.period1 || st.period6 })) }
-  const later = M.buildHourlyDays(allHourly, NOW, 3, 3, "sv")
+  const later = M.buildHourlyDays(allHourly, NOW, 3, 3, "nl")
   assert.equal(later[1].sixHour, false)
   assert.equal(later[2].sixHour, true)
   assert.deepEqual(later[2].rows.map((r) => r.hour), ["02", "08", "14", "20"])
@@ -360,7 +330,7 @@ test("hourly days: 3 h steps, then 6 h steps past the hourly range", () => {
   assert.ok(days[2].rows.every((r) => r.periodHours === 6))
   // The 6-hour row uses the 6-hour period even where hourly data exists.
   const mon02 = alingsas.steps.find((s) => s.ms === Date.parse("2026-09-28T00:00:00Z"))
-  assert.equal(days[2].rows[0].description, M.describeSymbol(mon02.period6.symbol, "sv"))
+  assert.equal(days[2].rows[0].description, M.describeSymbol(mon02.period6.symbol, "nl"))
   assert.equal(M.buildHourlyDays(alingsas, NOW, 3, 3, "en")[2].title, "Monday Sep 28")
 })
 
@@ -373,12 +343,12 @@ test("day precipitation glyph follows the most likely kind", () => {
   assert.equal(M.precipGlyph([row("", 0, -4), row("", 5, -1)]), "\ue36f")
   assert.equal(M.precipGlyph([row("", 0, -4), row("", 5, 1)]), "\ue371")
   assert.equal(M.precipGlyph([row("", 0, null)]), "\ue371")
-  const days = M.buildHourlyDays(alingsas, NOW, 3, 3, "sv")
+  const days = M.buildHourlyDays(alingsas, NOW, 3, 3, "nl")
   assert.ok(days.every((d) => d.precipGlyph === M.precipGlyph(d.rows)))
 })
 
 test("hourly rows carry precipitation, spread and wind", () => {
-  const days = M.buildHourlyDays(bergen, bergen.steps[0].ms, 1, 3, "sv")
+  const days = M.buildHourlyDays(bergen, bergen.steps[0].ms, 1, 3, "nl")
   const rows = days.flatMap((d) => d.rows)
   const wet = rows.find((r) => r.precip.text !== "")
   assert.ok(wet, "Bergen fixture should have precipitation")
@@ -388,17 +358,17 @@ test("hourly rows carry precipitation, spread and wind", () => {
 })
 
 test("long range: one row per day, today first, sane values", () => {
-  const days = M.buildLongRange(alingsas, NOW, 10, "sv")
-  assert.equal(days[0].day, "Idag")
-  assert.equal(days[1].day, "Sön")
+  const days = M.buildLongRange(alingsas, NOW, 10, "nl")
+  assert.equal(days[0].day, "Vandaag")
+  assert.equal(days[1].day, "Zo")
   assert.ok(days.length >= 10)
   for (const d of days) {
     assert.ok(d.min <= d.max, JSON.stringify(d))
     assert.equal(d.icon.length, 1)
   }
   // Evening: only night periods remain today, but the overview still shows a day icon.
-  const evening = M.buildLongRange(alingsas, Date.parse("2026-09-26T19:00:00Z"), 1, "sv")[0]
-  assert.equal(evening.day, "Idag")
+  const evening = M.buildLongRange(alingsas, Date.parse("2026-09-26T19:00:00Z"), 1, "nl")[0]
+  assert.equal(evening.day, "Vandaag")
   assert.ok(!["\ue32b", "\ue37e"].includes(evening.icon), "night icon in overview")
   const wet = M.buildLongRange(singapore, singapore.steps[0].ms, 10, "en")
   assert.ok(wet.some((d) => d.precip !== ""), "Singapore fixture should have precipitation")
@@ -417,14 +387,14 @@ test("long range precipitation does not double count overlapping periods", () =>
 })
 
 test("nowcast summary", () => {
-  const dry = M.buildNowcast(nowcastAlingsas, nowcastAlingsas.steps[0].ms, "sv")
-  assert.match(dry.summary, /^Uppehåll närmaste \d+ min$/)
+  const dry = M.buildNowcast(nowcastAlingsas, nowcastAlingsas.steps[0].ms, "nl")
+  assert.match(dry.summary, /^Droog de komende \d+ min$/)
   assert.equal(dry.wet, false)
 
   const wetLater = JSON.parse(JSON.stringify(nowcastAlingsas))
   wetLater.steps[4].instant.precipitation_rate = 0.5
   wetLater.steps[4].period1 = { hours: 1, symbol: "lightrain", details: {} }
-  assert.equal(M.buildNowcast(wetLater, wetLater.steps[0].ms, "sv").summary, "Regn om ca 20 min")
+  assert.equal(M.buildNowcast(wetLater, wetLater.steps[0].ms, "nl").summary, "Regen over ca. 20 min")
 
   const stopping = JSON.parse(JSON.stringify(nowcastAlingsas))
   for (let i = 0; i < 3; i++) stopping.steps[i].instant.precipitation_rate = 1.2
@@ -432,15 +402,15 @@ test("nowcast summary", () => {
 
   const noCoverage = JSON.parse(JSON.stringify(nowcastAlingsas))
   noCoverage.meta.radar_coverage = "temporarily unavailable"
-  assert.equal(M.buildNowcast(noCoverage, noCoverage.steps[0].ms, "sv"), null)
+  assert.equal(M.buildNowcast(noCoverage, noCoverage.steps[0].ms, "nl"), null)
 })
 
 test("sun and moon", () => {
   const view = M.buildView({ forecast: alingsas, sun, moon, location: { name: "Alingsås", latitude: 57.93, longitude: 12.53 },
-                             lang: "sv", nowMs: NOW, settings: {} })
+                             lang: "nl", nowMs: NOW, settings: {} })
   assert.deepEqual(view.sun, { rise: "07:03", set: "18:58" })
-  assert.equal(view.moon.name, "Fullmåne")  // 171°, within ±22.5° of full
-  assert.equal(view.moon.high, "högst 01:08")
+  assert.equal(view.moon.name, "Volle maan")  // 171°, within ±22.5° of full
+  assert.equal(view.moon.high, "hoogst 01:08")
   const noHigh = Object.assign({}, moon, { highMs: NaN })
   assert.equal(M.buildView({ moon: noHigh, lang: "en", nowMs: NOW }).moon.high, "")
   assert.equal(M.buildView({ moon, lang: "en", nowMs: NOW }).moon.high, "highest 01:08")
@@ -450,42 +420,42 @@ test("sun and moon", () => {
 test("full view model", () => {
   const view = M.buildView({ forecast: alingsas, nowcast: nowcastAlingsas, sun, moon,
                              location: { name: "Alingsås", latitude: 57.93, longitude: 12.53 },
-                             lang: "sv", nowMs: NOW, settings: { hourStep: 3, hourlyDays: 3, longRangeDays: 10 } })
+                             lang: "nl", nowMs: NOW, settings: { hourStep: 3, hourlyDays: 3, longRangeDays: 10 } })
   assert.equal(view.ready, true)
   assert.equal(view.location.set, true)
   assert.equal(view.bar.text, view.current.icon + " " + view.current.temp + "°")
   assert.equal(view.days.length, 3)
   // The overview continues where the hourly sections stop (Tue 29 Sep).
-  assert.equal(view.longRange[0].day, "Tis")
+  assert.equal(view.longRange[0].day, "Di")
   const hourlyStarts = view.days.map((d) => d.start)
   assert.ok(view.longRange.every((d) => !hourlyStarts.includes(d.start)))
   assert.ok(view.longRange.length >= 7 && view.longRange.length <= 10)
   const twoHourly = M.buildView({ forecast: alingsas, location: { name: "A", latitude: 57.93, longitude: 12.53 },
-                                  lang: "sv", nowMs: NOW, settings: { hourlyDays: 2 } })
-  assert.equal(twoHourly.longRange[0].day, "Mån")
+                                  lang: "nl", nowMs: NOW, settings: { hourlyDays: 2 } })
+  assert.equal(twoHourly.longRange[0].day, "Ma")
   // Late in the evening today has no hourly rows left, and isn't listed in
   // the overview either: the hourly sections are Sun and Mon, then Tue.
   const late = M.buildView({ forecast: alingsas, location: { name: "A", latitude: 57.93, longitude: 12.53 },
-                             lang: "sv", nowMs: Date.parse("2026-09-26T20:30:00Z"), settings: { hourlyDays: 3 } })
-  assert.deepEqual(late.days.map((d) => d.title.split(" ")[0]), ["Imorgon", "Måndag"])
-  assert.equal(late.longRange[0].day, "Tis")
+                             lang: "nl", nowMs: Date.parse("2026-09-26T20:30:00Z"), settings: { hourlyDays: 3 } })
+  assert.deepEqual(late.days.map((d) => d.title.split(" ")[0]), ["Morgen", "Maandag"])
+  assert.equal(late.longRange[0].day, "Di")
   assert.ok(view.longRangeScale.min <= view.longRangeScale.max)
   assert.equal(view.updatedAt, "14:30")
   const note = M.notification(view)
-  assert.match(note.headline, /^Alingsås {2}· {2}Klart \d+°$/)
-  assert.match(note.body, /^Vind \d+ m\/s \S+ {2}· {2}Uppehåll/)
+  assert.match(note.headline, /^Alingsås {2}· {2}Helder \d+°$/)
+  assert.match(note.body, /^Wind \d+ m\/s \S+ {2}· {2}Droog/)
   assert.equal(note.glyph, view.current.icon)
 })
 
 test("summary line for scripts", () => {
   const view = M.buildView({ forecast: alingsas, nowcast: nowcastAlingsas, sun, moon,
                              location: { name: "Alingsås", latitude: 57.93, longitude: 12.53 },
-                             lang: "sv", nowMs: NOW, settings: {} })
-  assert.match(M.summaryText(view), /^Alingsås · Klart \d+° · Vind \d+ m\/s \S+ · Uppehåll/)
+                             lang: "nl", nowMs: NOW, settings: {} })
+  assert.match(M.summaryText(view), /^Alingsås · Helder \d+° · Wind \d+ m\/s \S+ · Droog/)
   assert.equal(M.summaryText(M.buildView({ lang: "en", nowMs: NOW, location: { name: "", latitude: null, longitude: null } })),
     "Choose a place to see the weather")
-  assert.equal(M.summaryText(M.buildView({ lang: "sv", nowMs: NOW, location: { name: "A", latitude: 57.9, longitude: 12.5 } })),
-    "Hämtar prognos…")
+  assert.equal(M.summaryText(M.buildView({ lang: "nl", nowMs: NOW, location: { name: "A", latitude: 57.9, longitude: 12.5 } })),
+    "Voorspelling ophalen…")
 })
 
 test("view without forecast or location", () => {
@@ -507,8 +477,8 @@ test("location file and geocoding", () => {
   assert.equal(results[0].description, "Västra Götalands län, Sverige")
   assert.equal(typeof results[0].elevation, "number")
   assert.deepEqual(M.parseGeocodingResults(fixture("geocode-empty.json")), [])
-  assert.equal(M.geocodeUrl("Göte borg", "sv"),
-    "https://geocoding-api.open-meteo.com/v1/search?name=G%C3%B6te%20borg&count=6&format=json&language=sv")
+  assert.equal(M.geocodeUrl("Göte borg", "nl"),
+    "https://geocoding-api.open-meteo.com/v1/search?name=G%C3%B6te%20borg&count=6&format=json&language=nl")
 
   assert.equal(M.locationCommit("alings", results, 0), results[0])
   assert.equal(M.locationCommit("alings", results, 99), results[results.length - 1])
@@ -516,160 +486,66 @@ test("location file and geocoding", () => {
   assert.equal(M.locationCommit("x", [], 0), null)
 })
 
-test("tile maths matches the Web Mercator scheme", () => {
-  const t = M.worldTile(57.9303, 12.5335, 6)
-  assert.ok(Math.abs(t.x - 34.228) < 0.001 && Math.abs(t.y - 19.2995) < 0.001)
-  // Zoom 7 is exactly twice zoom 6.
-  const t7 = M.worldTile(57.9303, 12.5335, 7)
-  assert.ok(Math.abs(t7.x - 2 * t.x) < 1e-9 && Math.abs(t7.y - 2 * t.y) < 1e-9)
+test("Buienradar's rain coverage box and the marker's position on its render", () => {
+  assert.equal(M.hasRainCoverage({ latitude: 52.37, longitude: 4.89 }), true)   // Amsterdam
+  assert.equal(M.hasRainCoverage({ latitude: 50.85, longitude: 4.35 }), true)   // Brussels (fringe)
+  assert.equal(M.hasRainCoverage({ latitude: 40, longitude: 4.89 }), false)     // south of the box
+  assert.equal(M.hasRainCoverage({ latitude: 52.37, longitude: 20 }), false)    // east of the box
+  assert.equal(M.hasRainCoverage({ latitude: null, longitude: null }), false)
+
+  // The centre of the coverage box lands near the centre of the render.
+  const centre = M.radarMarkerPosition((49.5 + 54.8) / 2, 5)
+  assert.ok(Math.abs(centre.x - M.BR_RADAR_WIDTH / 2) < M.BR_RADAR_WIDTH * 0.1)
+  assert.ok(Math.abs(centre.y - M.BR_RADAR_HEIGHT / 2) < M.BR_RADAR_HEIGHT * 0.1)
+  assert.equal(M.radarMarkerPosition(40, 4.89), null)  // outside the box
+  assert.equal(M.radarMarkerPosition(null, 4.89), null)
 })
 
-const W = 659, H = 761
-const ALINGSAS = [57.9303, 12.5335]
+const BR_NOW_INDEX = M.BR_RADAR_HISTORY - 1
 
-// The view's pixel box, in tile units at its zoom.
-const viewBox = (v) => ({ x0: v.left / v.px, y0: v.top / v.px, x1: (v.left + W) / v.px, y1: (v.top + H) / v.px })
-
-test("views never leave the radar coverage", () => {
-  M.MAP_ZOOM_STEPS.forEach((step, i) => {
-    for (const [lat, lon] of [ALINGSAS, [55.4, 13.0] /* Skåne */, [69.65, 18.96] /* Tromsø */, [60.17, 24.94] /* Helsinki */]) {
-      const v = M.mapView(i, lat, lon, W, H)
-      const b = M.coverageTiles(v.z)
-      const box = viewBox(v)
-      const eps = 1 / v.px
-      if (b.x1 - b.x0 >= W / v.px) assert.ok(box.x0 >= b.x0 - eps && box.x1 <= b.x1 + eps, `step ${i} ${lat},${lon} x`)
-      if (b.y1 - b.y0 >= H / v.px) assert.ok(box.y0 >= b.y0 - eps && box.y1 <= b.y1 + eps, `step ${i} ${lat},${lon} y`)
-      assert.ok(Number.isInteger(v.left) && Number.isInteger(v.top))
-    }
-  })
-})
-
-test("overview frames the whole coverage; closer steps centre on the place when they can", () => {
-  const o = M.mapView(0, ...ALINGSAS, W, H)
-  const b = M.coverageTiles(o.z)
-  const box = viewBox(o)
-  assert.ok(box.x0 <= b.x0 && box.x1 >= b.x1 && box.y0 <= b.y0 && box.y1 >= b.y1, "coverage fits")
-  assert.ok(o.px <= 256)
-  // Same overview wherever you are.
-  assert.deepEqual([o.left, o.top], [M.mapView(0, 69.65, 18.96, W, H).left, M.mapView(0, 69.65, 18.96, W, H).top])
-  // Zoomed in on Alingsås: centred.
-  const v = M.mapView(3, ...ALINGSAS, W, H)
-  assert.ok(Math.abs(v.markerX - W / 2) <= 1 && Math.abs(v.markerY - H / 2) <= 1)
-  // Zoomed in on Skåne: pushed north to stay in coverage, so the marker sits low.
-  const sk = M.mapView(2, 55.4, 13.0, W, H)
-  assert.ok(sk.markerY > H / 2 + 50, `marker at ${sk.markerY}`)
-  assert.ok(sk.markerX >= 0 && sk.markerX <= W && sk.markerY >= 0 && sk.markerY <= H)
-})
-
-test("view tiles cover the view without gaps, and radar lines up", () => {
-  M.MAP_ZOOM_STEPS.forEach((step, i) => {
-    const v = M.mapView(i, ...ALINGSAS, W, H)
-    const base = M.viewTiles(v, W, H)
-    for (const [px, py] of [[0, 0], [W - 1, 0], [0, H - 1], [W - 1, H - 1], [W / 2, H / 2]]) {
-      const hits = base.filter((t) => px >= t.left && px < t.left + t.size && py >= t.top && py < t.top + t.size)
-      assert.equal(hits.length, 1, `step ${i} pixel ${px},${py}`)
-    }
-    const r = M.radarView(v)
-    const f = Math.pow(2, v.z - r.z)
-    for (const rt of M.viewTiles(r, W, H)) {
-      const b = base.find((t) => t.x === rt.x * f && t.y === rt.y * f)
-      if (b) assert.deepEqual([b.left, b.top], [rt.left, rt.top], `step ${i}`)
-    }
-  })
-})
-
-test("map maths never loops or divides by zero on odd box sizes", () => {
-  // A tile size of 0 would make viewTiles loop forever and hang the shell.
-  // Each case runs in a child process, so such a loop can't hang the tests.
-  const { execFileSync } = require("node:child_process")
-  const script = `
-    const M = require(${JSON.stringify(path.join(__dirname, "load-model.js"))})
-    for (const [w, h] of [[0, 0], [1, 1], [3, 3], [63, 700], [NaN, 500], [-5, 10], [659, 761]])
-      for (let step = 0; step < M.MAP_ZOOM_STEPS.length; step++) {
-        const v = M.mapView(step, 57.93, 12.53, w, h)
-        const tiles = M.viewTiles(v, w, h)
-        M.viewTiles(M.radarView(v), w, h)
-        M.mapLabels({ fields: ["name", "name_sv", "name_en", "lat", "lon", "population", "flags"],
-                     places: [["A", "A", "A", 57.9, 12.5, 1e6, 3]] }, v, w, h, "sv", 7, "X")
-        if (w < 64 || !(w >= 64)) { if (v !== null || tiles.length) throw new Error("view for tiny box " + w) }
-        else if (!tiles.length) throw new Error("no tiles for " + w + "x" + h)
-      }
-    // Hostile views are refused rather than looped over.
-    for (const v of [{ z: 5, px: 0, left: -1, top: -1 }, { z: 5, px: NaN, left: 0, top: 0 },
-                     { z: 5, px: 1, left: 0, top: 0 }, null])
-      M.viewTiles(v, 659, 761)
-    console.log("ok")`
-  const out = execFileSync(process.execPath, ["-e", script], { timeout: 5000 }).toString().trim()
-  assert.equal(out, "ok")
-})
-
-test("map zoom steps", () => {
-  assert.equal(M.clampMapStep("9"), M.MAP_ZOOM_STEPS.length - 1)
-  assert.equal(M.clampMapStep(-2), 0)
-  assert.equal(M.clampMapStep(undefined), M.MAP_DEFAULT_STEP)
-  assert.deepEqual(M.radarView({ z: 7, px: 256, left: 1, top: 2 }), { z: 6, px: 512, left: 1, top: 2 })
-  assert.deepEqual(M.radarView({ z: 6, px: 181, left: 1, top: 2 }), { z: 6, px: 181, left: 1, top: 2 })
-  assert.equal(M.mapTilePath({ z: 6, x: 34, y: 19 }), "map/tiles/6/34/19.png")
-  // The build script uses the same coverage box and zoom steps.
-  const script = fs.readFileSync(path.join(__dirname, "..", "scripts", "build-basemap.py"), "utf8")
-  const c = M.RADAR_COVERAGE
-  assert.ok(script.includes(`COVERAGE = (${c.west}, ${c.south}, ${c.east}, ${c.north})`), "COVERAGE out of sync")
-  const zooms = [...new Set(M.MAP_ZOOM_STEPS.map((s) => s.z))].join(", ")
-  assert.ok(script.includes(`ZOOMS = (${zooms})`), "ZOOMS out of sync")
-})
-
-test("radar frames: observations then nowcast, with the now marker", () => {
-  const { frames, nowIndex } = M.radarFrames(fixture("yr-radar-observations.json"), fixture("yr-radar-nowcast.json"))
-  assert.equal(nowIndex, 17)
+test("Buienradar radar timeline: history then nowcast, with the now marker", () => {
+  const { frames, nowIndex } = M.radarFrames(fixture("buienradar-radar.json"))
+  assert.equal(frames.length, 18)
+  assert.equal(nowIndex, BR_NOW_INDEX)
   assert.equal(frames[nowIndex].forecast, false)
   assert.equal(frames[nowIndex + 1].forecast, true)
   assert.ok(frames.every((f, i) => i === 0 || f.timeMs > frames[i - 1].timeMs))
-  assert.equal(frames.length, 18 + 24)
-  assert.match(frames[0].template, /\{z\}\/\{x\}\/\{y\}\.png$/)
-  // Nowcast frames at or before the last observation are dropped.
-  const overlap = M.radarFrames(fixture("yr-radar-observations.json"), fixture("yr-radar-observations.json"))
-  assert.equal(overlap.frames.length, 18)
-  assert.deepEqual(M.radarFrames("", ""), { frames: [], nowIndex: -1 })
-  // Every frame knows its run; runs differ between observations and nowcast
-  // (and between successive nowcasts), so caches keyed by run never mix them.
-  assert.match(frames[0].runId, /^[0-9a-f]{32}$/)
-  assert.notEqual(frames[nowIndex].runId, frames[nowIndex + 1].runId)
-  assert.ok(frames.slice(nowIndex + 1).every((f) => f.runId === frames[nowIndex + 1].runId))
-  const a = M.radarTileFile({ z: 6, x: 1, y: 1 }, { timeMs: 5, runId: "run1", forecast: true })
-  const b = M.radarTileFile({ z: 6, x: 1, y: 1 }, { timeMs: 5, runId: "run2", forecast: true })
-  assert.notEqual(a, b, "same time, different forecast runs → different cache files")
-  // An observation is the same image in every run: one cache file.
-  assert.equal(M.radarTileFile({ z: 6, x: 1, y: 1 }, { timeMs: 5, runId: "run1", forecast: false }),
-    M.radarTileFile({ z: 6, x: 1, y: 1 }, { timeMs: 5, runId: "run2", forecast: false }))
-  assert.equal(M.radarFrameFile(frames[0], "v"), M.radarFrameFile(Object.assign({}, frames[0], { runId: "other" }), "v"))
-  assert.notEqual(M.radarFrameFile(frames[nowIndex + 1], "v"),
-    M.radarFrameFile(Object.assign({}, frames[nowIndex + 1], { runId: "other" }), "v"))
-  assert.equal(M.tileRunId("https://tiles.yr.no/api/precipitation-nowcast/01a0df3c-6d8e-71b9-8dd0-69864ef18745/202609261935/tiles/{z}/{x}/{y}.png"),
-    "01a0df3c6d8e71b98dd069864ef18745")
-  assert.equal(M.tileRunId("https://x/{z}/{x}/{y}.png"), "")
-  // 16:45 UTC observed = 18:45 local; the first nowcast frame is labelled as forecast.
-  assert.equal(M.mapFrameLabel(frames[nowIndex], "sv"), "18:45")
-  assert.equal(M.mapFrameLabel(frames[nowIndex + 1], "sv"), "Prognos 19:05")
-  assert.equal(M.mapFrameLabel(frames[nowIndex + 1], "en"), "Forecast 19:05")
-  assert.equal(M.mapFrameLabel(null, "sv"), "")
+  assert.deepEqual(M.radarFrames(""), { frames: [], nowIndex: -1 })
+  // Garbage times/urls are dropped, not crashed on.
+  assert.deepEqual(M.parseRadarIndex('{"times":[{"timestamp":"nope","url":"x"},{"timestamp":"2026-09-26T12:00:00Z","url":""}]}'), [])
+
+  // Every frame's id and cache file follow its exact image URL: a forecast
+  // frame refreshed with a new URL (Buienradar reruns its nowcast) gets a
+  // new id, so a loop never stitches together images from different runs;
+  // an observation's URL is stable, so it keeps the same cache file.
+  const a = M.radarFrameId({ timeMs: 5, url: "https://x/run1/5.png" })
+  const b = M.radarFrameId({ timeMs: 5, url: "https://x/run2/5.png" })
+  assert.notEqual(a, b)
+  assert.equal(M.radarFrameId({ timeMs: 5, url: "https://x/run1/5.png" }), a)
+  assert.match(M.radarFrameFile(frames[0]), /^f_\d+_[0-9a-z]+\.png$/)
+  assert.equal(M.radarFrameFile(frames[0]), M.radarFrameFile(Object.assign({}, frames[0])))
+
+  assert.equal(M.mapFrameLabel(frames[nowIndex], "nl"), "14:55")
+  assert.equal(M.mapFrameLabel(frames[nowIndex + 1], "nl"), "Voorspelling 15:00")
+  assert.equal(M.mapFrameLabel(frames[nowIndex + 1], "en"), "Forecast 15:00")
+  assert.equal(M.mapFrameLabel(null, "nl"), "")
 })
 
-test("radar tile urls and cache names", () => {
-  assert.equal(M.tileUrl("https://x/{z}/{x}/{y}.png", 6, 34, 19), "https://x/6/34/19.png")
-  assert.equal(M.radarTileFile({ z: 6, x: 34, y: 19 }, { timeMs: 123, runId: "abc", forecast: true }), "r_abc_123_6_34_19.png")
-  assert.equal(M.radarTileFile({ z: 6, x: 34, y: 19 }, { timeMs: 123, runId: "abc", forecast: false }), "r_123_6_34_19.png")
-  assert.equal(M.radarTileFile({ z: 6, x: 34, y: 19 }, { timeMs: 123, runId: "", forecast: true }), "r_123_6_34_19.png")
-  const dl = M.radarDownloads([{ z: 6, x: 3, y: 4 }, { z: 6, x: 5, y: 4 }],
-    [{ timeMs: 1, template: "u/{z}/{x}/{y}" }, { timeMs: 2, template: "v/{z}/{x}/{y}" }])
-  assert.equal(dl.length, 2 * 2)
-  assert.deepEqual(dl[0], { url: "u/6/3/4", file: "r_1_6_3_4.png" })  // no run id in these templates
+test("radar frame-list keys follow the frames' images", () => {
+  const f = (url, timeMs) => ({ url, timeMs })
+  const a = [f("https://x/1.png", 1), f("https://x/2.png", 2), f("https://x/now1/3.png", 3)]
+  assert.equal(M.radarFramesKey(a), M.radarFramesKey(a.map((x) => ({ ...x }))))
+  // A new forecast run, or a frame more or less, changes the key.
+  assert.notEqual(M.radarFramesKey(a), M.radarFramesKey([f("https://x/1.png", 1), f("https://x/2.png", 2), f("https://x/now2/3.png", 3)]))
+  assert.notEqual(M.radarFramesKey(a), M.radarFramesKey([f("https://x/1.png", 1), f("https://x/now1/3.png", 3)]))
+  assert.equal(M.radarFramesKey([]), "")
 })
 
-test("tile download fetches only missing tiles and never keeps failures", () => {
+test("radar frame download fetches only missing frames and never keeps failures", () => {
   const { execFileSync } = require("node:child_process")
   const os = require("node:os")
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "met-tiles-"))
-  const bin = fs.mkdtempSync(path.join(os.tmpdir(), "met-fakecurl-"))
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "br-radar-"))
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), "br-fakecurl-"))
   const log = path.join(bin, "calls")
   // Fake curl: logs its URLs; writes each -o target unless the URL contains "missing".
   fs.writeFileSync(path.join(bin, "curl"), `#!/bin/bash
@@ -683,49 +559,21 @@ for a in "$@"; do
   prev=$a
 done
 `, { mode: 0o755 })
-  const run = (downloads) => {
-    const cmd = M.tileDownloadCommand(dir, downloads, "agent/1")
-    return execFileSync(cmd[0], cmd.slice(1), { env: { ...process.env, PATH: bin + ":" + process.env.PATH } }).toString().trim()
-  }
-  fs.writeFileSync(path.join(dir, "r_0_6_9_9.png"), "cached")
-  const out = run([
-    { url: "http://t/cached", file: "r_0_6_9_9.png" },
-    { url: "http://t/r1", file: "r_1_6_1_1.png" },
-    { url: "http://t/missing", file: "r_2_6_1_1.png" },
-  ])
+  const frames = [
+    { timeMs: 1, url: "http://t/cached" },
+    { timeMs: 2, url: "http://t/fresh" },
+    { timeMs: 3, url: "http://t/missing" }
+  ]
+  fs.writeFileSync(path.join(dir, M.radarFrameFile(frames[0])), "cached")
+  const cmd = M.radarDownloadCommand(dir, frames, "agent/1")
+  const out = execFileSync(cmd[0], cmd.slice(1), { env: { ...process.env, PATH: bin + ":" + process.env.PATH } }).toString().trim()
   assert.equal(out, "2 1")  // two were not cached; one of them failed and is still missing
-  // Capped per tile, and a transfer cut off at the cap leaves no partial file.
   assert.deepEqual(fs.readFileSync(log, "utf8").trim().split("\n"),
-                   ["max " + M.MAX_TILE_BYTES, "remove-on-error", "http://t/r1", "http://t/missing"])
-  assert.equal(fs.readFileSync(path.join(dir, "r_0_6_9_9.png"), "utf8"), "cached")
-  assert.equal(fs.readFileSync(path.join(dir, "r_1_6_1_1.png"), "utf8"), "PNG")
-  assert.ok(!fs.existsSync(path.join(dir, "r_2_6_1_1.png")))
+                   ["max " + M.MAX_TILE_BYTES, "remove-on-error", "http://t/fresh", "http://t/missing"])
+  assert.equal(fs.readFileSync(path.join(dir, M.radarFrameFile(frames[0])), "utf8"), "cached")
+  assert.equal(fs.readFileSync(path.join(dir, M.radarFrameFile(frames[1])), "utf8"), "PNG")
+  assert.ok(!fs.existsSync(path.join(dir, M.radarFrameFile(frames[2]))))
   assert.deepEqual(fs.readdirSync(dir).filter((f) => f.endsWith(".part")), [])
-})
-
-test("radar frames are assembled with each tile in its place", { skip: !fs.existsSync("/usr/bin/magick") && "ImageMagick not installed" }, () => {
-  const { execFileSync } = require("node:child_process")
-  const os = require("node:os")
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "met-frames-"))
-  // Two 256 px tiles: red and blue. The view puts them at (-100, 10) and
-  // (156, 10) scaled to 128 px, on a 200×150 map.
-  execFileSync("magick", ["-size", "256x256", "xc:#ff0000", path.join(dir, "r_1_6_1_1.png")])
-  execFileSync("magick", ["-size", "256x256", "xc:#0000ff", path.join(dir, "r_1_6_2_1.png")])
-  const tiles = [{ z: 6, x: 1, y: 1, left: -100, top: 10, size: 128 }, { z: 6, x: 2, y: 1, left: 28, top: 10, size: 128 }]
-  const specs = M.frameComposeSpecs(tiles, [{ timeMs: 1 }, { timeMs: 2 }], "v")
-  assert.deepEqual(specs[0].split("|"), ["f_1_v.png", "r_1_6_1_1.png:-100:10", "r_1_6_2_1.png:28:10"])
-  const cmd = M.frameComposeCommand(dir, 200, 150, 128, specs)
-  assert.equal(execFileSync(cmd[0], cmd.slice(1)).toString().trim(), "2 1")  // two frames, one made
-  const pixel = (x, y) => execFileSync("magick", [path.join(dir, "f_1_v.png"), "-format", `%[pixel:p{${x},${y}}]`, "info:"]).toString()
-  assert.match(pixel(10, 50), /\(255,0,0\)|red/)       // red tile, shifted left
-  assert.match(pixel(100, 50), /\(0,0,255\)|blue/)     // blue tile from x = 28
-  assert.match(pixel(100, 5), /\(0,0,0\)|black/)       // above the tiles: background
-  assert.match(pixel(190, 145), /\(0,0,0\)|black/)     // past the blue tile (28 + 128 = 156)
-  // Frame 2 has no tiles on disk: left out, never an empty frame.
-  assert.ok(!fs.existsSync(path.join(dir, "f_2_v.png")))
-  assert.deepEqual(fs.readdirSync(dir).filter((f) => f.endsWith(".part")), [])
-  assert.equal(M.mapViewKey({ z: 6, px: 181, left: 5, top: -3 }, 633, 738), "6_181_5_-3_633_738")
-  assert.equal(M.mapViewKey(null, 1, 1), "")
 })
 
 test("Model.js is a shared, stateless QML library", () => {
@@ -735,32 +583,19 @@ test("Model.js is a shared, stateless QML library", () => {
   assert.doesNotMatch(source.replace(/\/\/.*$/gm, ""), /\bQt\.|\bQuickshell\b|\broot\./)
 })
 
-test("radar frame-list keys follow the frames' images", () => {
-  const obs = (runId, timeMs) => ({ runId, timeMs, forecast: false })
-  const fc = (runId, timeMs) => ({ runId, timeMs, forecast: true })
-  const a = [obs("obs1", 1), obs("obs1", 2), fc("now1", 3)]
-  assert.equal(M.radarFramesKey(a), M.radarFramesKey(a.map((x) => ({ ...x }))))
-  // A new observation index alone changes nothing: same images.
-  assert.equal(M.radarFramesKey(a), M.radarFramesKey([obs("obs2", 1), obs("obs2", 2), fc("now1", 3)]))
-  // A new forecast run, or a frame more or less, does.
-  assert.notEqual(M.radarFramesKey(a), M.radarFramesKey([obs("obs1", 1), obs("obs1", 2), fc("now2", 3)]))
-  assert.notEqual(M.radarFramesKey(a), M.radarFramesKey([obs("obs1", 1), fc("now1", 3)]))
-  assert.equal(M.radarFramesKey([]), "")
-})
-
 test("time ruler: tallest at now, falling off to both ends, stamped at whole hours from now", () => {
   const t0 = Date.parse("2026-09-27T07:50:00Z")  // 09:50 local
   const frames = Array.from({ length: 7 }, (_, i) => ({ timeMs: t0 + i * 300000, forecast: i > 2 }))
-  const ticks = M.rulerTicks(frames, 2, "sv")
+  const ticks = M.rulerTicks(frames, 2, "nl")
   assert.deepEqual(ticks.map((t) => t.level), [0.5, 0.75, 1, 0.75, 0.5, 0.25, 0])
   assert.deepEqual(ticks.map((t) => t.stamp), ["", "", "Nu", "", "", "", ""])
   assert.deepEqual(ticks.map((t) => t.forecast), [false, false, false, true, true, true, true])
   assert.equal(new Set(ticks.map((t) => t.key)).size, ticks.length)
   // A new "now" changes the levels, so the keys change too (ScriptModel).
-  assert.notEqual(M.rulerTicks(frames, 3, "sv")[0].key, ticks[0].key)
+  assert.notEqual(M.rulerTicks(frames, 3, "nl")[0].key, ticks[0].key)
   // No observations: the ruler peaks at the first frame.
-  assert.equal(M.rulerTicks(frames, -1, "sv")[0].level, 1)
-  assert.deepEqual(M.rulerTicks([], 0, "sv"), [])
+  assert.equal(M.rulerTicks(frames, -1, "nl")[0].level, 1)
+  assert.deepEqual(M.rulerTicks([], 0, "nl"), [])
   assert.deepEqual(M.rulerTicks([frames[0]], 0, "en").map((t) => t.stamp), ["Now"])
   // A loop like yr.no's: 17 observations up to now, 23 forecast frames.
   // Stamps sit a whole number of hours from now, whatever the clock says.
@@ -788,19 +623,17 @@ test("radar: rotating slots retain decoded endpoints across advancement and wrap
   assert.deepEqual(M.radarImageSlots([], 0, 0).frames, [null, null, null])
 })
 
-test("radar: one frame per tick, wrapping, and waiting on the newest frame while loading", () => {
+test("radar: one frame per tick, wrapping at the end", () => {
+  // Every published loop is complete (Buienradar's whole timeline is a
+  // handful of images, so unlike the old tile system there is no partial
+  // loop to wait on while more arrives).
   const frames = Array.from({ length: 10 }, (_, i) => ({ timeMs: i * 300000 }))
-  // Six of ten assembled: slots stay within them, wrapping inside the prefix.
-  const slots = M.radarImageSlots(frames, 5, 5, 6)
-  assert.ok(slots.frames.every((f) => f === null || f.timeMs < 6 * 300000))
+  const slots = M.radarImageSlots(frames, 5, 5)
   assert.equal(slots.frames[slots.current], frames[5])
-  assert.deepEqual(M.radarStep(3, 3, 10, 6), { frame: 4, tick: 4 })
-  assert.deepEqual(M.radarStep(5, 5, 10, 6), { frame: 5, tick: 5 })     // newest assembled: wait
-  assert.deepEqual(M.radarStep(5, 5, 10, 8), { frame: 6, tick: 6 })     // more arrived: on
-  assert.deepEqual(M.radarStep(9, 9, 10, 10), { frame: 0, tick: 10 })   // complete: wrap
-  assert.deepEqual(M.radarStep(9, 9, 10), { frame: 0, tick: 10 })
-  assert.deepEqual(M.radarStep(7, 7, 5, 5), { frame: 0, tick: 8 })      // from a longer loop
-  assert.deepEqual(M.radarStep(0, 2, 1), { frame: 0, tick: 2 })         // a single frame
+  assert.deepEqual(M.radarStep(3, 3, 10), { frame: 4, tick: 4 })
+  assert.deepEqual(M.radarStep(9, 9, 10), { frame: 0, tick: 10 })  // wraps at the end
+  assert.deepEqual(M.radarStep(0, 2, 1), { frame: 0, tick: 2 })    // a single frame never advances
+  assert.deepEqual(M.radarStep(0, 2, 0), { frame: 0, tick: 2 })    // no frames
 })
 
 test("radar: a replacement loop carries on at the same time", () => {
@@ -814,7 +647,7 @@ test("radar: a replacement loop carries on at the same time", () => {
 
 test("list keys: unique, stable for unchanged content, new for changed content", () => {
   const build = (nowMs) => M.buildView({ forecast: alingsas, nowcast: nowcastAlingsas, sun, moon,
-    location: { name: "Alingsås", latitude: 57.93, longitude: 12.53 }, lang: "sv", nowMs, settings: {} })
+    location: { name: "Alingsås", latitude: 57.93, longitude: 12.53 }, lang: "nl", nowMs, settings: {} })
   const a = build(NOW), b = build(NOW + 60000)
   const rowKeys = (v) => v.days.flatMap((d) => d.rows.map((r) => r.key))
   for (const keys of [rowKeys(a), a.days.map((d) => d.key), a.longRange.map((d) => d.key)])
@@ -825,78 +658,11 @@ test("list keys: unique, stable for unchanged content, new for changed content",
   // Changed content → changed key.
   const changed = JSON.parse(JSON.stringify(a.days[0].rows[0])); changed.temp += 1
   assert.notEqual(M.contentKey ? M.contentKey(changed) : null, a.days[0].rows[0].key)
-  // Tiles, labels, suggestions and nowcast points carry keys too.
-  const v = M.mapView(1, 57.93, 12.53, 659, 761)
-  const tiles = M.viewTiles(v, 659, 761)
-  assert.equal(new Set(tiles.map((t) => t.key)).size, tiles.length)
+  // Radar frames, search suggestions and nowcast points carry keys too.
+  const frames = M.radarFrames(fixture("buienradar-radar.json")).frames
+  assert.equal(new Set(frames.map((f) => M.radarFrameId(f))).size, frames.length)
   assert.ok(M.parseGeocodingResults(fixture("geocode-alings.json")).every((r) => typeof r.key === "string"))
   assert.ok(a.nowcast.points.every((p) => typeof p.key === "string"))
-})
-
-test("lightning: yr.no's events, oldest first, each with a stable bolt", () => {
-  const strikes = M.parseLightning(fixture("yr-lightning.json"))
-  assert.equal(strikes.length, 40)
-  assert.deepEqual([strikes[0].ms, strikes[0].lon, strikes[0].lat], [1785943095000, 11.4935, 58.1638])
-  assert.ok(strikes.every((s, i) => i === 0 || strikes[i - 1].ms <= s.ms))
-  assert.deepEqual(M.parseLightning(fixture("yr-lightning.json"))[5].shape, strikes[5].shape)
-  // No strikes is a valid answer; anything else unreadable is not.
-  assert.deepEqual(M.parseLightning('{"historicalData":"[]","status":{"code":"Ok"}}'), [])
-  assert.equal(M.parseLightning("<html>"), null)
-  assert.equal(M.parseLightning('{"historicalData":"oops"}'), null)
-  // Extra fields per event are ignored; broken events are skipped.
-  assert.equal(M.parseLightning('{"historicalData":"[[1,2,3,4,5],[\\"x\\",2,3]]"}').length, 1)
-})
-
-test("lightning bolt: ends at the strike, above it, sometimes forked", () => {
-  let forked = 0
-  for (let seed = 1; seed <= 400; seed++) {
-    const b = M.lightningShape(seed * 7919)
-    assert.deepEqual(b.main[b.main.length - 1], [0, 0])
-    assert.equal(b.main.length, 9)
-    const top = b.main[0]
-    assert.ok(top[1] <= -13 && top[1] >= -22 && Math.abs(top[0]) <= 4)
-    assert.ok(b.branches.length <= 2)
-    for (const branch of b.branches) assert.ok(b.main.some((p) => p[0] === branch[0][0] && p[1] === branch[0][1]))
-    if (b.branches.length) forked++
-  }
-  assert.ok(forked > 120 && forked < 280, String(forked))
-})
-
-test("lightning moment: frame time, then the latest data, none ahead", () => {
-  const now = 1000 * 60000
-  assert.equal(M.lightningMoment(now - 5 * 60000, now, now + 3 * 60000), now - 5 * 60000)
-  assert.equal(M.lightningMoment(now, now, now + 3 * 60000), now + 3 * 60000)
-  assert.equal(M.lightningMoment(now, now, 0), now)
-  assert.equal(M.lightningMoment(now + 5 * 60000, now, now + 3 * 60000), null)
-})
-
-test("lightning points: in view pixels, like the location marker", () => {
-  const view = M.mapView(2, 57.93, 12.53, W, H)
-  const strikes = [{ ms: 2, lat: 57.93, lon: 12.53, shape: null }, { ms: 1, lat: 40, lon: 12.53, shape: null }]
-  const points = M.lightningPoints(strikes, view, W, H, 30)
-  assert.equal(points.length, 1)
-  assert.ok(Math.abs(points[0].x - view.markerX) < 1e-9 && Math.abs(points[0].y - view.markerY) < 1e-9)
-  assert.deepEqual(M.lightningPoints(strikes, null, W, H, 30), [])
-})
-
-test("radar coverage: the latest observation, or the newest assembled frame", () => {
-  const frames = [0, 1, 2, 3, 4].map((t) => ({ timeMs: t }))
-  assert.equal(M.radarCoverageIndex({ frames, nowIndex: 3 }), 3)
-  assert.equal(M.radarCoverageIndex({ frames, nowIndex: 3, ready: 2 }), 1)
-  assert.equal(M.radarCoverageIndex({ frames, nowIndex: 3, ready: 4 }), 3)
-  assert.equal(M.radarCoverageIndex({ frames, nowIndex: -1 }), 0)
-})
-
-test("lightning bolts: new and after-image, thinned newest first", () => {
-  const m = 100 * 60000
-  const at = (x, y, minutesAgo) => ({ x, y, ms: m - minutesAgo * 60000 })
-  const points = [at(0, 0, 12), at(50, 50, 7), at(55, 55, 6), at(0, 0, 2), at(5, 5, 1), at(100, 0, 0), at(0, 0, -1)]
-  const bolts = M.lightningBolts(points, m)
-  // Newest first: (100,0), (5,5); (0,0) at 2 min is within 10 px of (5,5).
-  assert.deepEqual(bolts.fresh.map((p) => [p.x, p.y]), [[100, 0], [5, 5]])
-  // 5–10 min: (55,55) then (50,50), which is too close to it. 12 min: none.
-  assert.deepEqual(bolts.after.map((p) => [p.x, p.y]), [[55, 55]])
-  assert.deepEqual(M.lightningBolts([], m), { fresh: [], after: [] })
 })
 
 test("favourites: parsed, keyed by coordinates, capped", () => {
@@ -950,13 +716,13 @@ test("favourites: toggle, remove, rows and stepping", () => {
 test("user agent and id come from the manifest", () => {
   const manifest = JSON.parse(repoFile("manifest.json"))
   assert.equal(M.PLUGIN_ID, manifest.id)
-  assert.equal(M.userAgent(manifest), manifest.id + "/" + manifest.version + " github.com/nameproof/nordic-weather")
+  assert.equal(M.userAgent(manifest), manifest.id + "/" + manifest.version + " github.com/toldenburger/nordic-weather")
   assert.ok(M.userAgent(null).startsWith(manifest.id + "/dev "))
 })
 
 test("requests are throttled per service", () => {
-  for (const kind of ["forecast", "nowcast", "sun", "moon"]) assert.equal(M.requestService(kind), "met")
-  for (const kind of ["yrObs", "yrNow", "lightning"]) assert.equal(M.requestService(kind), "yr")
+  for (const kind of ["forecast", "sun", "moon"]) assert.equal(M.requestService(kind), "met")
+  for (const kind of ["nowcast", "radar"]) assert.equal(M.requestService(kind), "br")
 })
 
 test("radar is shown only while our copy is recent and not awaiting a refresh", () => {
@@ -969,7 +735,7 @@ test("radar is shown only while our copy is recent and not awaiting a refresh", 
   assert.equal(M.radarUsable(radar, now, false, now - 31 * min), false)
   assert.equal(M.radarUsable(radar, now, false, now - 600 * min), false)
   assert.equal(M.radarUsable(radar, now, false, NaN), false)
-  // yr.no running late (newest observation 45 min old) but just fetched: shown.
+  // Buienradar running late (newest observation 45 min old) but just fetched: shown.
   assert.equal(M.radarUsable(radar, now, false, now - min), true)
   // Waiting for the refresh started on opening: nothing yet.
   assert.equal(M.radarUsable(radar, now, true, now), false)
@@ -977,12 +743,12 @@ test("radar is shown only while our copy is recent and not awaiting a refresh", 
   assert.equal(M.radarUsable(null, now, false, now), false)
 })
 
-test("radar delay note: only when yr.no's newest observation is late", () => {
+test("radar delay note: only when Buienradar's newest observation is late", () => {
   const now = Date.parse("2026-09-29T11:57:00Z")
-  assert.equal(M.radarDelayNote(now - 10 * 60000, now, "sv"), "")
-  assert.equal(M.radarDelayNote(Date.parse("2026-09-29T11:15:00Z"), now, "sv"), "Radar från 13:15")
+  assert.equal(M.radarDelayNote(now - 10 * 60000, now, "nl"), "")
+  assert.equal(M.radarDelayNote(Date.parse("2026-09-29T11:15:00Z"), now, "nl"), "Radar van 13:15")
   assert.equal(M.radarDelayNote(Date.parse("2026-09-29T11:15:00Z"), now, "en"), "Radar from 13:15")
-  assert.equal(M.radarDelayNote(0, now, "sv"), "")
+  assert.equal(M.radarDelayNote(0, now, "nl"), "")
 })
 
 test("place search: duplicate results are dropped (list keys must be unique)", () => {
@@ -995,8 +761,8 @@ test("place search: duplicate results are dropped (list keys must be unique)", (
 test("radar gap note: only when frames are missing from the loop", () => {
   const at = (minutes) => minutes.map((m) => ({ timeMs: m * 60000 }))
   assert.equal(M.radarGapNote(at([0, 5, 10, 15]), "en"), "")
-  // yr.no's outage: 13:15 → 13:55 with nothing between.
-  assert.equal(M.radarGapNote(at([0, 5, 10, 50, 55]), "en"), "Gaps in yr.no's radar: expect time jumps between frames")
-  assert.equal(M.radarGapNote(at([0, 5, 10, 50]), "sv"), "Luckor i yr.no:s radar – tiden kan hoppa mellan bilder")
+  // An outage: 13:15 → 13:55 with nothing between.
+  assert.equal(M.radarGapNote(at([0, 5, 10, 50, 55]), "en"), "Gaps in the radar: expect time jumps between frames")
+  assert.equal(M.radarGapNote(at([0, 5, 10, 50]), "nl"), "Hiaten in de radar – de tijd kan springen tussen beelden")
   assert.equal(M.radarGapNote([], "en"), "")
 })
