@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "id": "io.github.nameproof.nordic-weather",
-  "name": "Nordic Weather",
-  "version": "1.0.1",
-  "author": "nameproof",
+  "id": "io.github.toldenburger.netherlands-weather",
+  "name": "Netherlands Weather",
+  "version": "1.0.0",
+  "author": "toldenburger",
   "license": "MIT",
-  "description": "Weather bar with a detailed forecast and lazy-loaded radar map covering the Nordic region, replacing the built-in weather widget.",
+  "description": "Weather bar with a detailed forecast and a lazy-loaded Buienradar radar map for the Netherlands, replacing the built-in weather widget. Forked from nordic-weather.",
   "kinds": [
     "service",
     "bar-widget"
@@ -18,7 +18,7 @@
     "clonedFrom": "omarchy.weather"
   },
   "barWidget": {
-    "displayName": "Nordic Weather",
+    "displayName": "Netherlands Weather",
     "description": "Weather pill with forecast panel",
     "category": "Info",
     "allowMultiple": false,

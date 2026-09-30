@@ -7,7 +7,7 @@ import qs.Ui
 // panel and hands the panel the service.
 BarWidget {
   id: root
-  moduleName: "io.github.nameproof.nordic-weather"
+  moduleName: "io.github.toldenburger.netherlands-weather"
 
   readonly property var service: bar && bar.shell && typeof bar.shell.serviceFor === "function"
     ? bar.shell.serviceFor(moduleName) : null
