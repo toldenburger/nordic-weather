@@ -557,6 +557,11 @@ test("radar frame-list keys follow the frames' images", () => {
   assert.equal(M.radarFramesKey([]), "")
 })
 
+test("radar frame download follows redirects (Buienradar's URLs 302 to a CDN)", () => {
+  const script = M.radarDownloadCommand("/tmp", [], "agent/1")[2]
+  assert.match(script, /curl[^\n]*(?:^|\s)-L(?:\s|$)/m)
+})
+
 test("radar frame download fetches only missing frames and never keeps failures", () => {
   const { execFileSync } = require("node:child_process")
   const os = require("node:os")

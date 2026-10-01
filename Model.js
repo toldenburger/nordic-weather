@@ -1348,7 +1348,9 @@ function radarDownloadCommand(dir, frames, agent) {
     + '  shift 2\n'
     + 'done\n'
     + 'if (( ${#parts[@]} )); then\n'
-    + '  curl -sS --fail --parallel --parallel-max 24 --max-time 20 --max-filesize "$max" --remove-on-error \\\n'
+    // Buienradar's frame URLs 302 to a CDN host; without -L curl writes the
+    // empty redirect body and every frame counts as missing.
+    + '  curl -sS -L --max-redirs 3 --fail --parallel --parallel-max 24 --max-time 20 --max-filesize "$max" --remove-on-error \\\n'
     + '    -A "$ua" "${args[@]}" 2>/dev/null\n'
     + '  for f in "${parts[@]}"; do\n'
     + '    if [[ -s "$dir/$f.part" ]]; then mv -f "$dir/$f.part" "$dir/$f"; else rm -f "$dir/$f.part"; fi\n'
