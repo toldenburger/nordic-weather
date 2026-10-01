@@ -1189,6 +1189,21 @@ function radarMarkerPosition(lat, lon) {
   return { x: x, y: y }
 }
 
+// The radar map's zoom: 1 shows Buienradar's whole render (as before),
+// higher levels crop and pan the already-downloaded frame images toward the
+// chosen place client-side (Buienradar has no server-side pan/zoom to ask
+// for a tighter render). Buienradar's composite is already close to
+// 1 km/pixel, so the top level (~140 km across) is about as tight as it
+// gets before it's just blown-up pixels, not more detail.
+var RADAR_ZOOM_MIN = 1
+var RADAR_ZOOM_MAX = 5
+
+function clampRadarZoom(zoom) {
+  var z = Number(zoom)
+  if (!isNum(z)) z = RADAR_ZOOM_MIN
+  return Math.max(RADAR_ZOOM_MIN, Math.min(RADAR_ZOOM_MAX, Math.round(z)))
+}
+
 // A short, stable, filename-safe id for a frame's image URL: Buienradar
 // hands out a fresh URL per forecast run, so this changes with it and the
 // cache never mixes frames from different runs; an observation's URL (and
@@ -1400,6 +1415,9 @@ if (typeof module !== "undefined") {
     RADAR_COVERAGE: RADAR_COVERAGE,
     hasRainCoverage: hasRainCoverage,
     radarMarkerPosition: radarMarkerPosition,
+    RADAR_ZOOM_MIN: RADAR_ZOOM_MIN,
+    RADAR_ZOOM_MAX: RADAR_ZOOM_MAX,
+    clampRadarZoom: clampRadarZoom,
     BR_RADAR_WIDTH: BR_RADAR_WIDTH,
     BR_RADAR_HEIGHT: BR_RADAR_HEIGHT,
     stableHash: stableHash,

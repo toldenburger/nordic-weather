@@ -746,6 +746,17 @@ test("requests are throttled per service", () => {
   for (const kind of ["nowcast", "radar"]) assert.equal(M.requestService(kind), "br")
 })
 
+test("radar zoom clamps to Buienradar's useful range and rounds to whole steps", () => {
+  assert.equal(M.clampRadarZoom(1), 1)
+  assert.equal(M.clampRadarZoom(3.4), 3)
+  assert.equal(M.clampRadarZoom(3.6), 4)
+  assert.equal(M.clampRadarZoom(0), M.RADAR_ZOOM_MIN)
+  assert.equal(M.clampRadarZoom(-5), M.RADAR_ZOOM_MIN)
+  assert.equal(M.clampRadarZoom(99), M.RADAR_ZOOM_MAX)
+  assert.equal(M.clampRadarZoom(undefined), M.RADAR_ZOOM_MIN)
+  assert.equal(M.clampRadarZoom("nope"), M.RADAR_ZOOM_MIN)
+})
+
 test("radar is shown only while our copy is recent and not awaiting a refresh", () => {
   const now = Date.parse("2026-09-29T08:30:00Z")
   const radar = { nowIndex: 1, frames: [{ timeMs: now - 3000000 }, { timeMs: now - 2700000 }, { timeMs: now + 300000 }] }

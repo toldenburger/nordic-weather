@@ -455,6 +455,20 @@ Scope {
 
   // ---------------------------------------------------------------- radar (Buienradar)
 
+  // The radar map's zoom, centred on the chosen place: 1 shows Buienradar's
+  // whole render (as before); higher levels crop and pan toward it
+  // client-side. Remembered like the old tile map's mapStep was.
+  readonly property real radarZoom: Model.clampRadarZoom(cache.prefs ? cache.prefs.radarZoom : undefined)
+
+  function zoomRadar(delta) {
+    var z = Model.clampRadarZoom(radarZoom + delta)
+    if (z !== radarZoom) setPref("radarZoom", z)
+  }
+
+  function setRadarZoom(zoom) {
+    zoomRadar(Model.clampRadarZoom(zoom) - radarZoom)
+  }
+
   // The radar side panel: Buienradar's national radar composite, one
   // ready-rendered frame at a time. Only downloaded and animated while some
   // panel shows it.
@@ -634,6 +648,7 @@ Scope {
     function edit(): void { root.openPanelWith("edit") }
     function radar(): void { root.openPanelWith("radar") }
     function refresh(): void { root.refresh(true) }
+    function mapZoom(step: int): void { root.setRadarZoom(step) }
     // Switch to the next or previous favourite place.
     function favorite(direction: string): void { root.stepFavorite(direction === "previous" ? -1 : 1) }
     // For scripts: "Alkmaar · Helder 12° · Wind 2 m/s Z · …" and "12°".

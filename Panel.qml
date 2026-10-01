@@ -165,14 +165,22 @@ Panel {
   readonly property string radarToken: service ? service.radarToken : ""
 
   // Where the chosen place falls on Buienradar's fixed-size render, or null
-  // outside it (Buienradar has no per-location pan or zoom, unlike the old
-  // tile-based map).
+  // outside it. Buienradar has no server-side pan/zoom, so a tighter view
+  // (radarZoom) crops and pans the downloaded frame images client-side,
+  // centred on this point.
   readonly property var markerPosition: radarActive ? Model.radarMarkerPosition(location.latitude, location.longitude) : null
+  readonly property real radarZoom: service ? service.radarZoom : Model.RADAR_ZOOM_MIN
+  // Fraction of the render to centre the zoom on; the map's centre when the
+  // place falls outside Buienradar's coverage (no marker to zoom toward).
+  readonly property point radarFocus: markerPosition
+    ? Qt.point(markerPosition.x / Model.BR_RADAR_WIDTH, markerPosition.y / Model.BR_RADAR_HEIGHT)
+    : Qt.point(0.5, 0.5)
 
   function refresh(force) { if (service) service.refresh(force) }
   function togglePause() { if (service) service.togglePause() }
   function seekFrame(index) { if (service) service.seekFrame(index) }
   function stepFrame(delta) { if (service) service.stepFrame(delta) }
+  function zoomRadar(delta) { if (service) service.zoomRadar(delta) }
 
   // The time ruler's ticks (Model.rulerTicks), shared by the ruler on the map
   // and the stamps under it, which use the same inset.
@@ -324,6 +332,8 @@ Panel {
         else if (key === "," && root.radarActive) root.stepFrame(-1)
         else if (key === "." && root.radarActive) root.stepFrame(1)
         else if (key === "p" && root.radarActive) root.togglePause()
+        else if ((key === "+" || key === "=") && root.radarActive) root.zoomRadar(1)
+        else if (key === "-" && root.radarActive) root.zoomRadar(-1)
       }
 
       Flickable {
@@ -1247,6 +1257,17 @@ Panel {
             anchors.rightMargin: Style.space(4)
             spacing: Style.space(6)
 
+            // Scroll the map, or +/- , to zoom toward the chosen place.
+            Text {
+              id: zoomIndicator
+              visible: root.radarZoom > Model.RADAR_ZOOM_MIN
+              textFormat: Text.PlainText
+              text: root.radarZoom + "×"
+              color: root.faint
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.caption
+            }
+
             // Frames missing from the loop (an outage): a warning, with
             // the explanation on hover, so the jumps in time aren't taken
             // for a bug.
@@ -1310,13 +1331,32 @@ Panel {
           id: radarMap
           clip: true
 
+          // Buienradar's whole render scaled up by radarZoom and panned so
+          // radarFocus sits centred - clamped so it never pans past the
+          // render's own edges, which is also what keeps zoom 1 showing
+          // the full picture exactly as before regardless of where the
+          // chosen place falls on it.
+          readonly property real dispWidth: width * root.radarZoom
+          readonly property real dispHeight: height * root.radarZoom
+          readonly property real panX: Math.max(width - dispWidth, Math.min(0, width / 2 - root.radarFocus.x * dispWidth))
+          readonly property real panY: Math.max(height - dispHeight, Math.min(0, height / 2 - root.radarFocus.y * dispHeight))
+
           // Buienradar's own rendered frame: its basemap and rain are
           // already baked in, so this is the whole picture (no base tiles,
           // shader recolouring or lightning layer to add on top, unlike
-          // the original Nordic build's yr.no tiles).
+          // the original Nordic build's yr.no tiles). PreserveAspectFit
+          // inside this box keeps fitting it exactly, since dispWidth/
+          // dispHeight scale both dimensions by the same zoom factor.
           RadarImages {
             id: radarImages
-            anchors.fill: parent
+            x: radarMap.panX
+            y: radarMap.panY
+            width: radarMap.dispWidth
+            height: radarMap.dispHeight
+            Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+            Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+            Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+            Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
             loop: root.imageLoop
             playhead: root.radarPlayhead
             directory: root.tilesDir
@@ -1328,12 +1368,17 @@ Panel {
           }
 
           // The chosen place, when it falls inside Buienradar's coverage.
+          // Tracks the same pan/zoom as the image: centred once zoomed in
+          // on it, drifting toward the edge only where panning clamped
+          // against the render's own bounds (e.g. a place near the coast).
           Item {
             id: marker
             readonly property var pos: root.markerPosition
             visible: pos !== null
-            x: pos ? Math.round(pos.x / Model.BR_RADAR_WIDTH * radarMap.width) : 0
-            y: pos ? Math.round(pos.y / Model.BR_RADAR_HEIGHT * radarMap.height) : 0
+            x: pos ? Math.round(radarMap.panX + pos.x / Model.BR_RADAR_WIDTH * radarMap.dispWidth) : 0
+            y: pos ? Math.round(radarMap.panY + pos.y / Model.BR_RADAR_HEIGHT * radarMap.dispHeight) : 0
+            Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+            Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
             Rectangle {
               x: -width / 2
@@ -1370,6 +1415,7 @@ Panel {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: root.togglePause()
+            onWheel: function(wheel) { root.zoomRadar(wheel.angleDelta.y > 0 ? 1 : -1) }
           }
 
           // Time ruler: one tick per frame, tallest at "now" and shorter
