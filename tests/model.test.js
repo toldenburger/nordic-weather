@@ -85,6 +85,22 @@ test("time parsing", () => {
   assert.ok(Number.isNaN(M.parseIsoMs("nope")))
 })
 
+test("Buienradar's radar timestamps have no zone suffix and are UTC", () => {
+  // Confirmed against the live endpoint (2026-10-01): it answers with bare
+  // "YYYY-MM-DDTHH:MM:SS", unlike MET's always-zoned timestamps, and the
+  // values line up with UTC, not Europe/Amsterdam local time.
+  assert.equal(M.parseUtcNaiveMs("2026-10-01T04:30:00"), Date.UTC(2026, 9, 1, 4, 30, 0))
+  assert.ok(Number.isNaN(M.parseUtcNaiveMs("2026-10-01T04:30:00Z")))
+  assert.ok(Number.isNaN(M.parseUtcNaiveMs("2026-10-01T04:30:00+02:00")))
+  assert.ok(Number.isNaN(M.parseUtcNaiveMs("nope")))
+  // parseRadarIndex must use this parser, not parseIsoMs, or every frame
+  // from the real API silently drops and the radar never renders.
+  assert.deepEqual(
+    M.parseRadarIndex('{"times":[{"timestamp":"2026-10-01T04:30:00","url":"https://x/a.png"}]}'),
+    [{ timeMs: Date.UTC(2026, 9, 1, 4, 30, 0), url: "https://x/a.png" }]
+  )
+})
+
 test("sunrise offset follows DST for the date asked about", () => {
   assert.equal(M.utcOffsetString(Date.parse("2026-07-01T12:00:00Z")), "+02:00")
   assert.equal(M.utcOffsetString(Date.parse("2026-12-01T12:00:00Z")), "+01:00")

@@ -220,6 +220,15 @@ function parseIsoMs(value) {
   return ms
 }
 
+// Buienradar's radar metadata timestamps: "2026-10-01T04:30:00", no zone
+// suffix at all (unlike MET's, which are always "Z" or "+HH:MM"). Confirmed
+// against their live endpoint: these are UTC, not local wall-clock time.
+function parseUtcNaiveMs(value) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/.exec(String(value || ""))
+  if (!m) return NaN
+  return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])
+}
+
 // RFC 1123 dates from HTTP headers: "Sat, 26 Sep 2026 13:14:28 GMT".
 function parseHttpDateMs(value) {
   var m = /(\d{1,2}) (\w{3}) (\d{4}) (\d{2}):(\d{2}):(\d{2})/.exec(String(value || ""))
@@ -1205,7 +1214,7 @@ function parseRadarIndex(text) {
   var times = data && Array.isArray(data.times) ? data.times : []
   var out = []
   for (var i = 0; i < times.length; i++) {
-    var ms = parseIsoMs(times[i].timestamp)
+    var ms = parseUtcNaiveMs(times[i].timestamp)
     var url = times[i].url
     if (isNum(ms) && typeof url === "string" && url !== "") out.push({ timeMs: ms, url: url })
   }
@@ -1415,6 +1424,7 @@ if (typeof module !== "undefined") {
     formatNumber: formatNumber,
     roundTemp: roundTemp,
     parseIsoMs: parseIsoMs,
+    parseUtcNaiveMs: parseUtcNaiveMs,
     parseHttpDateMs: parseHttpDateMs,
     localDateKey: localDateKey,
     localDayStart: localDayStart,

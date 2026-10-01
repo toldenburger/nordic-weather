@@ -54,7 +54,11 @@ Scope {
     service.cache = Object.assign({}, service.cache, { radar: {
       key: "x",
       body: JSON.stringify({ times: times.map(function(t) {
-        return { timestamp: new Date(test.base + t).toISOString(),
+        // Buienradar's real metadata has no zone suffix at all (confirmed
+        // against the live endpoint), unlike toISOString()'s "...Z" — match
+        // that exactly, since Service.qml must parse the real shape, not a
+        // convenient one.
+        return { timestamp: new Date(test.base + t).toISOString().replace(/\.\d+Z$/, ""),
                  url: "file://" + Quickshell.env("RADAR_TEST_SOURCES") + "/" + label + "-" + t + ".png" }
       }) }),
       fetchedMs: now, expiresMs: now + 600000
